@@ -1,0 +1,84 @@
+{% extends 'core/base.html' %}
+{% load static %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-6 col-lg-5">
+
+        <div class="d-flex justify-content-between align-items-center mb-4 mt-2">
+            <div>
+                <h2 class="fw-bold mb-0">Hi, {{ student.first_name|default:student.username }}! 👋</h2>
+                <p class="text-muted mb-0 small">
+                    Enrollment: {{ student.enrollment_number }} | Roll No: {{ student.roll_number|default:"N/A" }}
+                </p>
+            </div>
+            <div class="bg-white shadow-sm rounded-circle d-flex align-items-center justify-content-center border" style="width: 50px; height: 50px;">
+                <i class="bi bi-person-fill h4 text-secondary mb-0"></i>
+            </div>
+        </div>
+
+        {% if live_lecture %}
+            <div class="card text-white shadow-lg mb-4 border-0 position-relative overflow-hidden" style="background-color: var(--primary-color);">
+                <div class="card-body p-4">
+                    <div class="d-flex justify-content-between align-items-start">
+                        <div>
+                            <span class="badge bg-white text-success mb-2 animate-pulse">
+                                <i class="bi bi-broadcast me-1"></i> LIVE NOW
+                            </span>
+                            <h3 class="fw-bold mb-1">{{ live_lecture.name }}</h3>
+                            <p class="mb-0 opacity-75"><i class="bi bi-clock me-1"></i> Started recently</p>
+                        </div>
+                        <i class="bi bi-qr-code-scan h1 opacity-50"></i>
+                    </div>
+                </div>
+            </div>
+        {% else %}
+            <div class="card bg-white border-0 shadow-sm mb-4">
+                <div class="card-body text-center py-5">
+                    <div class="text-muted mb-3">
+                        <i class="bi bi-cup-hot h1 text-secondary opacity-50" style="font-size: 3rem;"></i>
+                    </div>
+                    <h5 class="fw-bold text-dark">No active lectures</h5>
+                    <p class="text-muted small mb-0">Relax! You have no classes right now.</p>
+                </div>
+            </div>
+        {% endif %}
+
+        <div class="d-flex justify-content-between align-items-center mb-3 px-1">
+            <h6 class="fw-bold m-0 text-secondary">RECENT ATTENDANCE</h6>
+            <a href="#" class="text-decoration-none small fw-bold text-primary">View History</a>
+        </div>
+
+        <div class="list-group list-group-flush bg-transparent">
+            {% for record in recent_attendance %}
+                <div class="card mb-2 border-0 shadow-sm">
+                    <div class="card-body d-flex justify-content-between align-items-center p-3">
+                        <div class="d-flex align-items-center">
+                            <div class="rounded-circle p-2 me-3 {% if record.status == 'present' %}bg-success-subtle{% else %}bg-danger-subtle{% endif %}">
+                                <i class="bi {% if record.status == 'present' %}bi-check-lg text-success{% else %}bi-x-lg text-danger{% endif %}"></i>
+                            </div>
+                            <div>
+                                <h6 class="fw-bold mb-0 text-dark">{{ record.lecture.name }}</h6>
+                                <small class="text-muted">{{ record.time_in|date:"M d, h:i A" }}</small>
+                            </div>
+                        </div>
+                        
+                        <span class="badge rounded-pill {% if record.status == 'present' %}bg-success{% else %}bg-danger{% endif %}">
+                            {{ record.status|title }}
+                        </span>
+                    </div>
+                </div>
+            {% empty %}
+                <div class="text-center py-4">
+                    <small class="text-muted">No records found yet.</small>
+                </div>
+            {% endfor %}
+        </div>
+
+        <a href="#" class="btn-scan-fab text-decoration-none">
+            <i class="bi bi-qr-code-scan"></i>
+        </a>
+
+    </div>
+</div>
+{% endblock %}

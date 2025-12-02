@@ -1,0 +1,46 @@
+{% extends 'core/base.html' %}
+{% load static %}
+
+{% block content %}
+<div class="row justify-content-center align-items-center" style="height: 80vh;">
+    <div class="col-md-5 col-lg-4">
+        
+        <div class="card shadow-lg border-0">
+            <div class="card-body p-5">
+                
+                <div class="text-center mb-4">
+                    <h1 class="text-primary fw-bold d-flex align-items-center justify-content-center">
+                        <img src="{% static 'images/beqr.png' %}" alt="BeQr Logo" style="height: 50px; margin-right: 5px;">
+                    </h1>
+                    <p class="text-muted">Login to Your Account</p>
+                </div>
+
+                <form method="POST">
+                    {% csrf_token %} <div class="form-floating mb-3">
+                        <input type="text" name="username" class="form-control" id="floatingInput" placeholder="Enrollment No / Username" required>
+                        <label for="floatingInput"><i class="bi bi-person me-2"></i>Username</label>
+                    </div>
+
+                    <div class="form-floating mb-4">
+                        <input type="password" name="password" class="form-control" id="floatingPassword" placeholder="Password" required>
+                        <label for="floatingPassword"><i class="bi bi-lock me-2"></i>Password</label>
+                    </div>
+
+                    <div class="d-grid gap-2">
+                        <button type="submit" class="btn btn-primary btn-lg shadow-sm">
+                            Login Access
+                        </button>
+                    </div>
+
+                </form>
+                <div class="text-center mt-4 d-flex justify-content-between px-2">
+                    <a href="{% url 'forgot_password' %}" class="small text-muted text-decoration-none">Forgot password?</a>
+                    <a href="{% url 'signup' %}" class="small fw-bold text-primary text-decoration-none">Create Account</a>
+                </div>
+
+            </div>
+        </div>
+
+    </div>
+</div>
+{% endblock %}

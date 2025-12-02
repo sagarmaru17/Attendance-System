@@ -1,0 +1,88 @@
+{% extends 'core/base.html' %}
+{% load static %}
+
+{% block content %}
+<div class="row">
+    
+    <div class="col-md-4 mb-4">
+        <div class="card text-white shadow-lg border-0 mb-4" style="background-color: var(--primary-color);">
+            <div class="card-body p-4">
+                <h2 class="fw-bold">Professor {{ teacher.last_name }}</h2>
+                <p class="mb-0 opacity-75">Faculty ID: {{ teacher.username }}</p>
+                
+                <hr class="bg-white opacity-25 my-3">
+                
+                <div class="d-flex justify-content-between text-center">
+                    <div>
+                        <h3 class="fw-bold mb-0">{{ lectures.count }}</h3>
+                        <small class="opacity-75">My Classes</small>
+                    </div>
+                    <div>
+                        <h3 class="fw-bold mb-0">0</h3>
+                        <small class="opacity-75">Active Now</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="card border-0 shadow-sm">
+            <div class="d-grid gap-2">
+                <a href="#" class="btn btn-outline-primary text-start">
+                    <i class="bi bi-file-earmark-pdf me-2"></i> Generate Reports
+                </a>
+    
+                <a href="#" class="btn btn-outline-secondary text-start">
+                    <i class="bi bi-people me-2"></i> Manage Students
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-8">
+        <div class="card shadow-sm border-0">
+            <div class="card-header bg-white border-0 py-3">
+                <h5 class="fw-bold m-0" style="color: var(--primary-color);">My Schedule / Lectures</h5>
+            </div>
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle mb-0">
+                        <thead class="bg-light">
+                            <tr>
+                                <th class="ps-4">Lecture Name</th>
+                                <th>Created On</th>
+                                <th class="text-end pe-4">Action</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for lecture in lectures %}
+                            <tr>
+                                <td class="ps-4">
+                                    <div class="fw-bold">{{ lecture.name }}</div>
+                                    <small class="text-muted">CS-Dept</small>
+                                </td>
+                                <td class="text-muted small">
+                                    {{ lecture.created_at|date:"M d, Y" }}
+                                </td>
+                                <td class="text-end pe-4">
+                                    <a href="#" class="btn btn-sm btn-primary">
+                                        <i class="bi bi-play-circle me-1"></i> Start Class
+                                    </a>
+                                </td>
+                            </tr>
+                            {% empty %}
+                            <tr>
+                                <td colspan="3" class="text-center py-5 text-muted">
+                                    <i class="bi bi-calendar-x display-4"></i>
+                                    <p class="mt-2">No lectures assigned yet.</p>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+</div>
+{% endblock %}
