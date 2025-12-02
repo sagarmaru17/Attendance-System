@@ -1,23 +1,24 @@
-BeQR is a secure, fast, and reliable QR code-based attendance system designed for universities and institutions. It ensures students are physically present in lectures by requiring them to scan two QR codes (start and end of each lecture), validated with GPS, IP address, and timestamps.
+BeQR is a secure, fast, and reliable QR code-based attendance system designed for universities and institutions. It ensures students are physically present in lectures by requiring them to scan two QR codes (start and end of each lecture).
 
-
+# 📝 License
+# This project is for educational purposes as part of the BCA Semester Project by - Sagar Maru.
 
 # BeQr - Smart Attendance & Identity System
 
 **BeQr** is a secure, full-stack web application designed to streamline attendance tracking using dynamic QR codes. It replaces traditional manual systems with a digital, role-based model featuring real-time validation, location geofencing, and automated reporting.
 
 ![BeQr Banner](static/images/beqr.png)
-*(Replace this with a screenshot of your dashboard later)*
+
 
 pip install django djangorestframework mysqlclient qrcode pillow pyjwt
 
 Module Name	                Command Name	        Why you need it for BeQr
 Django	                    django	                The main framework running your website and Admin Panel.
-Django REST Framework       djangorestframework	    Required for building the APIs (future mobile app connection).
 MySQL Client                mysqlclient	            The "Driver" that allows Django to talk to your MySQL Database.
 QR Code	                    qrcode	                The library that actually generates the QR code pattern from your data.
 Pillow	                    pillow	                An image processing library. qrcode uses this to draw the image and save it as a PNG.
 PyJWT	                    pyjwt	                Used to create "JSON Web Tokens" (Secure, encrypted tokens) for your QR codes so students cannot fake them.
+Django REST Framework       djangorestframework	    Required for building the APIs (future mobile app connection).
 
 
 ---
@@ -69,9 +70,8 @@ Follow these steps to set up the project locally.
 
 ### 2. Clone the Repository
 ```bash
-git clone [https://github.com/YOUR_USERNAME/BeQr.git](https://github.com/YOUR_USERNAME/BeQr.git)
-cd BeQr
-3. Set Up Virtual Environment
+
+Set Up Virtual Environment
 Bash
 
 # Create the environment
@@ -97,7 +97,7 @@ DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.mysql',
         'NAME': 'beqr_db',
-        'USER': 'root',
+        'USER': 'bqr',
         'PASSWORD': 'YOUR_PASSWORD',
         'HOST': '127.0.0.1',
         'PORT': '3306',
@@ -136,8 +136,8 @@ Once registered, log in to access the Student Dashboard.
 📂 Project Structure
 Plaintext
 
-BeQr/
-├── beqr_project/       # Main Django settings
+BeQr-Attendance System/
+├── beqr/               # Main Django settings
 ├── core/               # Main Application logic
 │   ├── templates/      # HTML files (organized by role)
 │   ├── models.py       # Database Schema (CustomUser, Lecture, Attendance)
@@ -158,4 +158,4 @@ Push to the branch (git push origin feature/AmazingFeature).
 Open a Pull Request.
 
 📝 License
-This project is for educational purposes as part of the BCA Curriculum.
+This project is for educational purposes as part of the BCA Semester Project by - Sagar Maru.
