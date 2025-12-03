@@ -1,7 +1,11 @@
 BeQR is a secure, fast, and reliable QR code-based attendance system designed for universities and institutions. It ensures students are physically present in lectures by requiring them to scan two QR codes (start and end of each lecture).
 
+---
+
 # 📝 License
 # This project is for educational purposes as part of the BCA Semester Project by - Sagar Maru.
+
+---
 
 # BeQr - Smart Attendance & Identity System
 
@@ -10,16 +14,23 @@ BeQR is a secure, fast, and reliable QR code-based attendance system designed fo
 ![BeQr Banner](static/images/beqr.png)
 
 
+
+
+---
+
+## Requirements
+
+| Modual Name | Command | Description |
+| :--- | :--- | :--- |
+| **Django** | django | The main framework running your website and Admin Panel. |
+| **MySQL Client** | mysqlclient | The "Driver" that allows Django to talk to your MySQL Database. |
+| **QR Code** | qrcode | The library that actually generates the QR code pattern from your data. |
+| **Pillow** | pillow | An image processing library. qrcode uses this to draw the image and save it as a PNG. |
+| **Django REST Framework** | djangorestframework | Required for building the APIs (future mobile app connection). |
+| **PyJWT** | pyjwt | Used to create "JSON Web Tokens" (Secure, encrypted tokens) for your QR codes so students cannot fake them. |
+
+
 pip install django djangorestframework mysqlclient qrcode pillow pyjwt
-
-Module Name	                Command Name	        Why you need it for BeQr
-Django	                    django	                The main framework running your website and Admin Panel.
-MySQL Client                mysqlclient	            The "Driver" that allows Django to talk to your MySQL Database.
-QR Code	                    qrcode	                The library that actually generates the QR code pattern from your data.
-Pillow	                    pillow	                An image processing library. qrcode uses this to draw the image and save it as a PNG.
-PyJWT	                    pyjwt	                Used to create "JSON Web Tokens" (Secure, encrypted tokens) for your QR codes so students cannot fake them.
-Django REST Framework       djangorestframework	    Required for building the APIs (future mobile app connection).
-
 
 ---
 
@@ -80,11 +91,13 @@ python3 -m venv venv
 # Activate it
 source venv/bin/activate  # On macOS/Linux
 # venv\Scripts\activate   # On Windows
-4. Install Dependencies
+
+Install Dependencies
 Bash
 
 pip install -r requirements.txt
-5. Configure Database
+
+Configure Database
 Make sure your MySQL server is running.
 
 Create a database named beqr_db.
@@ -103,16 +116,20 @@ DATABASES = {
         'PORT': '3306',
     }
 }
-6. Run Migrations
+
+
+Run Migrations
 Bash
 
 python manage.py makemigrations
 python manage.py migrate
-7. Create Superuser (Admin)
+
+Create Superuser (Admin)
 Bash
 
 python manage.py createsuperuser
-8. Run the Server
+
+Run the Server
 Bash
 
 python manage.py runserver
