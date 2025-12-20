@@ -14,6 +14,9 @@ urlpatterns = [
 
     # We will build these next! (Placeholders for now)
     path('teacher/dashboard/', views.teacher_dashboard_view, name='teacher_dashboard'),
+    path('start_class/', views.start_class_view, name='start_class'),
+    path('end_class/', views.end_class_view, name='end_class'),
+
     path('student/dashboard/', views.student_dashboard_view, name='student_dashboard'),
 
 ]
