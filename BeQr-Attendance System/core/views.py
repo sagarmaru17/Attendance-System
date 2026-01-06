@@ -128,7 +128,7 @@ def teacher_dashboard_view(request):
     context = {
         'teacher': request.user,
         'lectures': my_lectures,
-        'registered_count': registered_count,
+        'registered_count': registered_count-1,  # Exclude admin/test accounts if needed
         'total_allowed': total_allowed,
         'allowed_students': allowed_students_list, # Passing the list to template
         'active_session': active_session, # Pass the session if it exists

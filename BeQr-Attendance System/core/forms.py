@@ -1,6 +1,8 @@
 from django import forms
 from django.contrib.auth.forms import UserCreationForm
 from .models import CustomUser, AllowedStudent
+from django.contrib.auth.models import User
+from .models import CustomUser
 
 class StudentRegistrationForm(UserCreationForm):
     enrollment_number = forms.CharField(max_length=50, required=True, help_text="Your University Enrollment No.")
@@ -42,3 +44,16 @@ class PasswordResetVerificationForm(forms.Form):
             except CustomUser.DoesNotExist:
                 raise forms.ValidationError("Details not found. Please check your Username and Enrollment Number.")
         return cleaned_data
+    
+
+class UserProfileUpdateForm(forms.ModelForm):
+    class Meta:
+        model = CustomUser
+        # ONLY include the fields they are allowed to edit
+        fields = ['username', 'first_name', 'last_name', 'email', 'roll_number']
+        
+    # Optional: Add Bootstrap classes for styling
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        for field in self.fields:
+            self.fields[field].widget.attrs.update({'class': 'form-control'})

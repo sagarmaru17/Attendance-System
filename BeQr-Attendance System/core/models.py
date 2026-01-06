@@ -77,7 +77,7 @@ class Attendance(models.Model):
 class AttendanceSession(models.Model):
     session_id = models.CharField(max_length=100, unique=True, default=uuid.uuid4)
     teacher = models.ForeignKey(CustomUser, on_delete=models.CASCADE, limit_choices_to={'role': 'teacher'})
-    course_name = models.CharField(max_length=100) # e.g., "BCA Sem 5"
+    course_name = models.CharField(max_length=100) # e.g., "BCA Sem 6"
     subject = models.CharField(max_length=100)     # e.g., "Python"
     start_time = models.DateTimeField(auto_now_add=True)
     end_time = models.DateTimeField(null=True, blank=True)
