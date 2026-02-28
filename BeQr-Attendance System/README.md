@@ -1,89 +1,133 @@
-BeQR is a secure, fast, and reliable QR code-based attendance system designed for universities and institutions. It ensures students are physically present in lectures by requiring them to scan two QR codes (start and end of each lecture).
+<div align="center">
+<img src="static/images/beqr.png" alt="BeQr Banner" width="100%">
 
----
+📱 BeQr - QR Code-Based Smart Attendance Management System
 
-# 📝 License
-# This project is for educational purposes as part of the BCA Semester Project by - Sagar Maru.
+A highly secure, full-stack biometric and network-validated attendance system built with Django.
 
----
+</div>
 
-# BeQr - Smart Attendance & Identity System
+🎓 Academic Submission Details
 
-**BeQr** is a secure, full-stack web application designed to streamline attendance tracking using dynamic QR codes. It replaces traditional manual systems with a digital, role-based model featuring real-time validation, location geofencing, and automated reporting.
+This project is developed and submitted as a BCA Final Year Project.
 
-![BeQr Banner](static/images/beqr.png)
+Student: Sagar Maru
+
+Enrolment: 230431163
+
+Guided by: Prof. Bhavin Mehta
+
+Submitted to: Faculty Of Computer Application, Noble University, Junagadh.
+
+📖 About The Project
+
+Traditional digital attendance systems (like static QR codes) are highly vulnerable to proxy attendance, VPN spoofing, and buddy punching via WhatsApp sharing.
+
+BeQr eliminates these loopholes using a custom Triple-Layer Verification Protocol and a Dual-Scan Workflow (Check-In/Check-Out). It ensures that a student is physically present in the classroom, using their own device, connected to the university network, at the exact time of the lecture.
+
+🛡️ The Unique Selling Proposition (USP)
+
+BeQr secures the attendance process using a rigorous 3-layer architecture:
+
+Layer 1: Time-Bound Rolling QR (PyJWT) QR codes are encrypted using JSON Web Tokens and expire strictly after a 15-minute window. This defeats the "WhatsApp Photo Forwarding" loophole.
+
+Layer 2: Network & Geofencing (CIDR + Geopy) Students must connect to the University's Wi-Fi. The backend uses IP Subnet Matching to block VPNs/Mobile Data, and the Haversine formula calculates physical distance to defeat Fake GPS apps.
+
+Layer 3: Device Fingerprinting (Cookies) A unique device_id is locked to the browser upon the first scan, preventing "Buddy Punching" (one student marking attendance for multiple friends on the same phone).
+
+🚀 Key Features
+
+🎓 For Students
+
+Mobile-First Scanner: Clean, web-based QR scanner for instant check-ins.
+
+Dual-Scan Integrity: Requires scanning at both the start and end of the lecture to prevent mid-class bunking.
+
+Live History: Track attendance records, dates, and calculated percentages.
+
+👨‍🏫 For Teachers
+
+Command Center: Manage schedules, initiate live sessions, and view active participants.
+
+Dynamic Generation: One-click generation of the cryptographic QR matrix.
+
+Manual Override: When students facing hardware issues.
+
+👨‍💻 For Administrators
+
+Master List Validation: Strict sign-up firewall. Only students pre-approved in the University Master List can create accounts.
+
+Role-Based Access Control (RBAC): Complete separation of privileges between Admins, Faculty, and Students.
+
+🛠️ Tech Stack & Dependencies
+
+Component
+
+Technology / Library
+
+Purpose
+
+Backend Framework
+
+Django 5.2.8
+
+Core application logic and ORM.
+
+Database
+
+MySQL & mysqlclient
+
+Fast, relational database with row-level locking.
+
+QR Engine
+
+qrcode & pillow
+
+Generates and draws the visual QR matrix.
+
+Cryptography
+
+PyJWT
+
+Encodes session data into time-expiring tokens.
+
+Geolocation
+
+geopy
+
+Calculates distance between Teacher and Student.
+
+Security
+
+python-dotenv
+
+Hides secret keys and DB credentials from source code.
+
+Frontend UI
+
+HTML5, Bootstrap 5
+
+Responsive, mobile-ready user interface.
+
+⚙️ Local Installation Guide
+
+Follow these steps to set up the BeQr project locally on your machine (macOS/Windows/Linux).
+
+1. Prerequisites
+
+Python 3.10+
+
+MySQL Server (e.g., MySQL Workbench)
+
+Git
+
+2. Clone the Repository
+
+git clone [https://github.com/yourusername/BeQr-Attendance-System.git](https://github.com/yourusername/BeQr-Attendance-System.git)
+cd BeQr-Attendance-System
 
 
-
-
----
-
-## Requirements
-
-| Modual Name | Command | Description |
-| :--- | :--- | :--- |
-| **Django** | django | The main framework running your website and Admin Panel. |
-| **MySQL Client** | mysqlclient | The "Driver" that allows Django to talk to your MySQL Database. |
-| **QR Code** | qrcode | The library that actually generates the QR code pattern from your data. |
-| **Pillow** | pillow | An image processing library. qrcode uses this to draw the image and save it as a PNG. |
-| **Django REST Framework** | djangorestframework | Required for building the APIs (future mobile app connection). |
-| **PyJWT** | pyjwt | Used to create "JSON Web Tokens" (Secure, encrypted tokens) for your QR codes so students cannot fake them. |
-
-
-pip install django djangorestframework mysqlclient qrcode pillow pyjwt
-
----
-
-## 🚀 Key Features
-
-### 🎓 For Students
-* **Mobile-First Dashboard:** Clean, app-like interface for easy access on phones.
-* **One-Tap Scan:** Integrated QR scanner to mark attendance instantly.
-* **Attendance History:** View past records, status (Present/Absent), and dates.
-* **Secure Profile:** Roll number and enrollment verification integrated.
-
-### 👨‍🏫 For Teachers
-* **Command Center:** Manage schedules and active lectures.
-* **Dynamic QR Generation:** Generate time-bound, encrypted QR codes for "Start" and "End" of class.
-* **Live Monitoring:** See students joining in real-time.
-* **Manual Override:** Adjust attendance for students with technical issues.
-* **Reports:** Export attendance sheets to PDF/CSV.
-
-### 🛡️ Security & Core
-* **Role-Based Access Control (RBAC):** Strict separation between Students, Teachers, and Admins.
-* **Master List Validation:** Only students with University-approved Enrollment Numbers can sign up.
-* **Auto-Generated Faculty IDs:** Teachers get unique, random 6-digit IDs for security.
-* **Geofencing & IP Validation:** (In Progress) Ensures students are physically present in the classroom.
-
----
-
-## 🛠️ Tech Stack
-
-| Component | Technology | Description |
-| :--- | :--- | :--- |
-| **Backend** | Python & Django | Core logic and security |
-| **Database** | MySQL | Relational data storage |
-| **Frontend** | HTML5, Bootstrap 5 | Responsive UI/UX |
-| **API** | Django REST Framework | For future mobile app integration |
-| **QR Engine** | Python `qrcode` + `Pillow` | Image generation |
-| **Security** | `PyJWT` | Token-based verification |
-
----
-
-## ⚙️ Installation Guide
-
-Follow these steps to set up the project locally.
-
-### 1. Prerequisites
-* Python 3.10 or higher
-* MySQL Server installed and running
-* Git
-
-### 2. Clone the Repository
-```bash
-
-Set Up Virtual Environment
-Bash
+3. Set Up Virtual Environment
 
 # Create the environment
 python3 -m venv venv
@@ -92,87 +136,69 @@ python3 -m venv venv
 source venv/bin/activate  # On macOS/Linux
 # venv\Scripts\activate   # On Windows
 
-Install Dependencies
-Bash
+
+4. Install Dependencies
 
 pip install -r requirements.txt
 
-Configure Database
-Make sure your MySQL server is running.
 
-Create a database named beqr_db.
+5. Configure the Database (.env)
 
-Update beqr_project/settings.py with your MySQL credentials:
+Create a .env file in the root directory (next to manage.py) to keep your credentials secure:
 
-Python
-
-DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.mysql',
-        'NAME': 'beqr_db',
-        'USER': 'bqr',
-        'PASSWORD': 'YOUR_PASSWORD',
-        'HOST': '127.0.0.1',
-        'PORT': '3306',
-    }
-}
+SECRET_KEY=your_django_secret_key_here
+DB_NAME=beqr_db
+DB_USER=root
+DB_PASSWORD=your_mysql_password
 
 
-Run Migrations
-Bash
+(Ensure you have created a database named beqr_db in your MySQL Server).
+
+6. Run Migrations & Create Admin
 
 python manage.py makemigrations
 python manage.py migrate
-
-Create Superuser (Admin)
-Bash
-
 python manage.py createsuperuser
 
-Run the Server
-Bash
+
+7. Launch the Server
 
 python manage.py runserver
+
+
 Visit http://127.0.0.1:8000/ in your browser.
 
-🚦 Usage & Workflow
-Setting Up the System (First Time)
-Log in as Admin at http://127.0.0.1:8000/admin/.
+🚦 Usage Workflow
 
-Add Allowed Students: Go to the "Allowed Students" table and add valid Enrollment Numbers. Students cannot sign up unless their number is here.
+Initial Setup: Log in to the Django Admin panel (/admin). Add valid Enrollment Numbers to the Allowed Students table. Create Faculty users (Faculty IDs are auto-generated).
 
-Create Teachers: Go to "Users", create a new user, and select the role "Teacher". The system will auto-generate their Faculty ID.
+Student Onboarding: Students click "Sign Up" and enter their University Enrollment Number. If it matches the Admin's Master List, the account is created.
 
-Student Sign Up
-Go to the Login page and click "Create Account".
+Running a Class: The Teacher logs in, clicks "Start Class", and displays the generated QR code on the projector.
 
-Enter your Username, Email, and Valid Enrollment Number.
-
-Once registered, log in to access the Student Dashboard.
+Marking Attendance: Students log in, scan the QR code via their phone, pass the background validation (IP + Location + Device), and are marked present.
 
 📂 Project Structure
-Plaintext
 
 BeQr-Attendance System/
-├── beqr/               # Main Django settings
-├── core/               # Main Application logic
-│   ├── templates/      # HTML files (organized by role)
-│   ├── models.py       # Database Schema (CustomUser, Lecture, Attendance)
-│   ├── views.py        # Business Logic
-│   └── forms.py        # Registration & Validation forms
-├── media/              # Generated QR codes & User uploads
-├── static/             # CSS, JavaScript, Images
-└── manage.py           # Django command utility
-🤝 Contributing
-Fork the repository.
+├── beqr/               # Django Settings & Root URL Configurations
+├── core/               # Main Application Logic
+│   ├── templates/      # HTML UI (Separated by Teacher/Student roles)
+│   ├── models.py       # Database Schema (CustomUser, Lecture, Session)
+│   ├── views.py        # Core Business & Validation Logic
+│   └── forms.py        # Security Validation & Master List Check
+├── media/              # Storage for Generated QR codes
+├── static/             # CSS, JavaScript, and Images
+├── requirements.txt    # Python dependencies
+└── manage.py           # Django execution script
 
-Create a new feature branch (git checkout -b feature/AmazingFeature).
 
-Commit your changes (git commit -m 'Add some AmazingFeature').
+👨‍💻 Author
 
-Push to the branch (git push origin feature/AmazingFeature).
+Sagar Maru
+Linkedin : https://www.linkedin.com/in/sagar-maru-b987b9294/
 
-Open a Pull Request.
 
 📝 License
-This project is for educational purposes as part of the BCA Semester Project by - Sagar Maru.
+
+This project was developed for educational purposes as part of a BCA academic submission.
