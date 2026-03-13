@@ -16,6 +16,8 @@ urlpatterns = [
     path('teacher/dashboard/', views.teacher_dashboard_view, name='teacher_dashboard'),
     path('start_class/', views.start_class_view, name='start_class'),
     path('end_class/', views.end_class_view, name='end_class'),
+    path('teacher/generate_report/', views.generate_report_view, name='generate_report'),# URL for generating reports
+
 
     path('student/dashboard/', views.student_dashboard_view, name='student_dashboard'),
 

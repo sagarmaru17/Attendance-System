@@ -1,7 +1,7 @@
 {% extends 'core/base.html' %}
 {% load static %}
 
-{% block content %}
+{% comment %} {% block content %}
 <div class="row justify-content-center">
     <div class="col-md-6 col-lg-5">
 
@@ -81,4 +81,190 @@
 
     </div>
 </div>
+{% endblock %}
+
+
+{% extends 'core/base.html' %}
+{% load static %} {% endcomment %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-8 col-lg-6">
+        
+        <div class="card shadow-sm border-0 mb-4 rounded-4" style="background-color: var(--primary-color);">
+            <div class="card-body p-4 text-white">
+                <div class="d-flex align-items-center">
+                    <div class="flex-grow-1">
+                        <h3 class="fw-bold mb-1">{{ student.first_name }} {{ student.last_name }}</h3>
+                        <p class="mb-0 opacity-75"><i class="bi bi-person-badge me-2"></i>Roll No: {{ student.roll_number }}</p>
+                        <p class="mb-0 opacity-75"><i class="bi bi-card-text me-2"></i>Enrollment: {{ student.enrollment_number }}</p>
+                    </div>
+                    <div class="display-1 opacity-25">
+                        <i class="bi bi-mortarboard-fill"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="card shadow-sm border-0 rounded-4 mb-5">
+            <div class="card-header bg-white border-bottom py-3 px-4">
+                <h5 class="fw-bold m-0" style="color: var(--primary-color);"><i class="bi bi-clock-history me-2"></i>Recent Activity</h5>
+            </div>
+            <div class="card-body p-0">
+                <div class="list-group list-group-flush rounded-bottom-4">
+                    {% for record in recent_attendance %}
+                        <div class="list-group-item p-3 border-bottom">
+                            <div class="d-flex w-100 justify-content-between align-items-center">
+                                <div>
+                                    <h6 class="mb-1 fw-bold">{{ record.session.subject }}</h6>
+                                    <small class="text-muted">{{ record.time_in|date:"d M Y, h:i A" }}</small>
+                                </div>
+                                <div>
+                                    {% if record.status == 'present' %}
+                                        <span class="badge-status-present shadow-sm"><i class="bi bi-check-circle"></i> Present</span>
+                                    {% elif record.status == 'incomplete' %}
+                                        <span class="badge bg-warning text-dark shadow-sm"><i class="bi bi-hourglass"></i> Incomplete</span>
+                                    {% else %}
+                                        <span class="badge-status-absent shadow-sm"><i class="bi bi-x-circle"></i> Absent</span>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                    {% empty %}
+                        <div class="text-center py-5 text-muted">
+                            <i class="bi bi-journal-x display-4 mb-2"></i>
+                            <p>No recent attendance records found.</p>
+                        </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+
+    </div>
+</div>
+
+<button class="btn-scan-fab" data-bs-toggle="modal" data-bs-target="#scannerModal" id="fabScanBtn">
+    <i class="bi bi-qr-code-scan"></i>
+</button>
+
+<div class="modal fade" id="scannerModal" tabindex="-1" aria-hidden="true" data-bs-backdrop="static">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0 shadow-lg rounded-4">
+            <div class="modal-header border-0" style="background-color: var(--primary-color);">
+                <h5 class="modal-title text-white fw-bold"><i class="bi bi-camera-video me-2"></i>Scan Class QR</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close" id="closeModalBtn"></button>
+            </div>
+            <div class="modal-body p-0 text-center bg-dark position-relative">
+                
+                <div id="reader" style="width: 100%; min-height: 300px;"></div>
+                
+                <div id="processingOverlay" class="position-absolute top-0 start-0 w-100 h-100 bg-dark bg-opacity-75 d-flex flex-column justify-content-center align-items-center" style="display: none !important; z-index: 10;">
+                    <div class="spinner-border text-success mb-3" role="status" style="width: 3rem; height: 3rem;"></div>
+                    <h5 class="text-white fw-bold" id="processingText">Acquiring GPS Lock...</h5>
+                </div>
+
+            </div>
+            <div class="modal-footer bg-light border-0 justify-content-center">
+                <small class="text-muted"><i class="bi bi-shield-lock me-1"></i> Ensure you are inside the classroom.</small>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% comment %} <form id="scanSubmitForm" action="{% url 'process_scan' %}" method="POST" style="display: none;">
+    {% csrf_token %}
+    <input type="hidden" name="qr_token" id="qr_token_input">
+    <input type="hidden" name="latitude" id="student_lat_input">
+    <input type="hidden" name="longitude" id="student_lon_input">
+</form> {% endcomment %}
+
+{% endblock %}
+
+{% block scripts %}
+<script src="https://unpkg.com/html5-qrcode"></script>
+
+<script>
+    document.addEventListener("DOMContentLoaded", function() {
+        let html5QrcodeScanner;
+        const scannerModal = document.getElementById('scannerModal');
+        const processingOverlay = document.getElementById('processingOverlay');
+        const processingText = document.getElementById('processingText');
+        const scanForm = document.getElementById('scanSubmitForm');
+
+        // When the modal opens, start the camera
+        scannerModal.addEventListener('shown.bs.modal', function () {
+            // Configuration for the scanner
+            const config = { 
+                fps: 10, 
+                qrbox: { width: 250, height: 250 },
+                aspectRatio: 1.0,
+                disableFlip: false
+            };
+
+            // Initialize Scanner
+            html5QrcodeScanner = new Html5Qrcode("reader");
+            
+            // Start scanning using the back camera ideally
+            html5QrcodeScanner.start(
+                { facingMode: "environment" }, 
+                config, 
+                onScanSuccess
+            ).catch(err => {
+                alert("Camera access denied or unavailable. Please check your browser permissions.");
+            });
+        });
+
+        // When the modal closes, stop the camera to save battery
+        scannerModal.addEventListener('hidden.bs.modal', function () {
+            if (html5QrcodeScanner) {
+                html5QrcodeScanner.stop().then(() => {
+                    html5QrcodeScanner.clear();
+                }).catch(err => {
+                    console.error("Failed to stop scanner", err);
+                });
+            }
+            // Reset overlay in case they open it again
+            processingOverlay.style.setProperty('display', 'none', 'important');
+        });
+
+        // What happens when a QR code is successfully read
+        function onScanSuccess(decodedText, decodedResult) {
+            // 1. Immediately pause the scanner so it doesn't scan twice
+            html5QrcodeScanner.pause();
+            
+            // 2. Show the processing overlay
+            processingOverlay.style.setProperty('display', 'flex', 'important');
+            
+            // 3. Put the read token into our hidden form
+            document.getElementById('qr_token_input').value = decodedText;
+
+            // 4. Fetch the student's live GPS coordinates
+            if (navigator.geolocation) {
+                navigator.geolocation.getCurrentPosition(
+                    function(position) {
+                        // Success! Put GPS into hidden form
+                        document.getElementById('student_lat_input').value = position.coords.latitude;
+                        document.getElementById('student_lon_input').value = position.coords.longitude;
+                        
+                        processingText.innerText = "Verifying with server...";
+                        
+                        // 5. Submit the form to Django!
+                        scanForm.submit();
+                    },
+                    function(error) {
+                        // Failed to get GPS
+                        alert("We need your location to verify you are in class! Please enable Location Services.");
+                        processingOverlay.style.setProperty('display', 'none', 'important');
+                        html5QrcodeScanner.resume();
+                    },
+                    { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
+                );
+            } else {
+                alert("Your browser does not support Geolocation.");
+                processingOverlay.style.setProperty('display', 'none', 'important');
+                html5QrcodeScanner.resume();
+            }
+        }
+    });
+</script>
 {% endblock %}

@@ -1,178 +1,387 @@
 /* static/css/style.css */
 
-/* 1. DESIGN VARIABLES (The "Personality") */
+/* ============================================
+   1. DESIGN VARIABLES (The "Personality")
+   ============================================
+   Central color palette and typography settings.
+   All UI components reference these variables.
+============================================ */
 :root {
-    /* The new brand color based on the logo green */
-  --primary-color: #10B981;  /* This is the GREEN code */
-    /* A slightly darker shade for hover states */
+    /* Primary brand color - extracted from logo green */
+    --primary-color: #10B981;
+    
+    /* Darker shade for interactive hover states */
     --primary-hover: #059669;
 
+    /* Secondary neutral color for less prominent elements */
     --secondary-color: #64748B; /* Slate Gray */
 
-    /* Success now matches the brand green */
+    /* Success state inherits the primary green for consistency */
     --success-color: var(--primary-color);
+    
+    /* Warning state for alerts and cautionary messages */
     --warning-color: #F59E0B;   /* Amber */
+    
+    /* Danger/error state for destructive actions and errors */
     --danger-color: #E11D48;    /* Rose Red */
 
+    /* Light background for the main page canvas */
     --bg-color: #F8FAFC;        /* Off-White Background */
+    
+    /* Pure white for card/container backgrounds */
     --card-bg: #FFFFFF;
-    --text-dark: #1E293B;       /* Matching the dark part of logo */
+    
+    /* Primary text color matching the dark logo element */
+    --text-dark: #1E293B;
+    
+    /* Modern sans-serif font stack */
     --font-main: 'Inter', sans-serif;
 }
 
+/* Apply base typography and background to entire page */
 body {
     font-family: var(--font-main);
     background-color: var(--bg-color);
-    color: var(--text-dark); /* Updated text color */
+    color: var(--text-dark);
+    
+    /* Prevent fixed footer overlap on mobile */
     margin-bottom: 80px;
 }
-/* 2. GLOBAL COMPONENTS */
 
-/* Modern Cards */
+/* ============================================
+   2.NAVIGATION BAR STYLING
+   ============================================ */
+
+/* Base navbar link styling */
+.navbar-nav .nav-link {
+    /* Medium weight for better readability */
+    font-weight: 500;
+    
+    /* Smooth color transition on interaction */
+    transition: color 0.2s ease-in-out;
+}
+
+/* Interactive states - hover, focus, and active link */
+.navbar-nav .nav-link:hover,
+.navbar-nav .nav-link:focus,
+.navbar-nav .nav-link.active {
+    /* Brand green color for visual feedback */
+    color: var(--primary-color) !important; 
+}
+
+
+/* ============================================
+   3. GLOBAL COMPONENTS
+   ============================================ */
+
+/* Modern card container with subtle depth */
 .card {
     background: var(--card-bg);
+    
+    /* Remove Bootstrap's default border */
     border: none;
-    border-radius: 16px; /* Soft rounded corners */
+    
+    /* Soft rounded corners for modern aesthetic */
+    border-radius: 16px;
+    
+    /* Layered shadow for depth perception */
     box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 
                 0 2px 4px -1px rgba(0, 0, 0, 0.03);
+    
+    /* Smooth animation on transform and shadow changes */
     transition: transform 0.2s ease, box-shadow 0.2s ease;
 }
 
+/* Interactive lift effect on card hover */
 .card:hover {
-    transform: translateY(-2px); /* Subtle lift effect */
+    /* Subtle upward movement */
+    transform: translateY(-2px);
+    
+    /* Enhanced shadow for lifted appearance */
     box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.05);
 }
 
+/* Card header section styling */
 .card-header {
+    /* Remove default Bootstrap background */
     background-color: transparent;
+    
+    /* Subtle separator line */
     border-bottom: 1px solid #F1F5F9;
+    
+    /* Heavier font weight for hierarchy */
     font-weight: 600;
+    
+    /* Consistent internal spacing */
     padding: 1.25rem;
 }
 
-/* Custom Buttons */
+/* ============================================
+   CUSTOM BUTTONS
+   ============================================ */
+
+/* Base button styling override */
 .btn {
+    /* Rounded corners matching card design */
     border-radius: 10px;
+    
+    /* Comfortable click target size */
     padding: 10px 20px;
+    
+    /* Medium weight for readability */
     font-weight: 500;
+    
+    /* Smooth transitions for all property changes */
     transition: all 0.2s;
 }
 
+/* Primary action button - uses brand green */
 .btn-primary {
     background-color: var(--primary-color) !important;
     border-color: var(--primary-color) !important;
     color: #fff;
 }
 
-/* Hover State (Mouse over) */
+/* Hover state - darker green with slight scale effect */
 .btn-primary:hover {
     background-color: var(--primary-hover) !important;
     border-color: var(--primary-hover) !important;
+    
+    /* Subtle enlargement feedback */
     transform: scale(1.02);
 }
 
-/* Active & Focus States (When clicked or selected) */
+/* Active and focus states for accessibility and interaction feedback */
 .btn-primary:active, 
 .btn-primary:focus, 
 .btn-primary:active:focus, 
 .btn-primary.active {
     background-color: var(--primary-hover) !important;
     border-color: var(--primary-hover) !important;
-    /* This changes the "ring" that appears when you click from Blue to Green */
-    box-shadow: 0 0 0 0.25rem rgba(16, 185, 129, 0.4) !important; 
+    
+    /* Green focus ring instead of Bootstrap's default blue */
+    box-shadow: 0 0 0 0.25rem rgba(16, 185, 129, 0.4) !important;
 }
-/* Form Inputs */
+
+/* ============================================
+   FORM INPUTS
+   ============================================ */
+
+/* Text input and textarea base styling */
 .form-control {
+    /* Consistent rounding with buttons */
     border-radius: 10px;
+    
+    /* Comfortable input height */
     padding: 12px;
+    
+    /* Subtle border for definition */
     border: 1px solid #E2E8F0;
+    
+    /* Light background in unfocused state */
     background-color: #F8FAFC;
 }
 
+/* Focused input state - enhanced visibility */
 .form-control:focus {
+    /* Pure white background when active */
     background-color: #FFF;
+    
+    /* Green border matches brand */
     border-color: var(--primary-color);
-    /* Update shadow to green rgba(16, 185, 129, 0.1) */
+    
+    /* Green glow effect for focus indicator */
     box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.1);
 }
 
-/* 3. SPECIFIC UI ELEMENTS */
+/* ============================================
+   4. SPECIFIC UI ELEMENTS
+   ============================================ */
 
-/* Student Mobile Dashboard - FAB (Floating Action Button) */
+/* Floating Action Button (FAB) for mobile QR scanner */
 .btn-scan-fab {
+    /* Fixed position at bottom center */
     position: fixed;
     bottom: 30px;
     left: 50%;
+    
+    /* Center horizontally using translate */
     transform: translateX(-50%);
+    
+    /* Circular FAB dimensions */
     width: 70px;
     height: 70px;
     border-radius: 50%;
+    
+    /* Brand green background */
     background: var(--primary-color);
     color: white;
+    
+    /* Prominent shadow for floating effect */
     box-shadow: 0 10px 25px rgba(37, 99, 235, 0.4);
+    
+    /* Flexbox for perfect icon centering */
     display: flex;
     align-items: center;
     justify-content: center;
+    
+    /* Large icon size */
     font-size: 28px;
+    
+    /* Ensure FAB stays above other content */
     z-index: 1000;
+    
+    /* White ring around button */
     border: 4px solid white;
 }
 
+/* Press feedback for FAB */
 .btn-scan-fab:active {
+    /* Maintain centering while scaling down */
     transform: translateX(-50%) scale(0.95);
 }
 
-/* "Live Class" Pulsing Effect */
+/* ============================================
+   LIVE CLASS INDICATOR
+   ============================================ */
+
+/* Animated red dot for "Live Class" status */
 .live-indicator {
     display: inline-block;
+    
+    /* Small circular dot */
     width: 10px;
     height: 10px;
+    
+    /* Red color for urgency/live status */
     background-color: var(--danger-color);
     border-radius: 50%;
+    
+    /* Spacing from adjacent text */
     margin-right: 8px;
+    
+    /* Continuous pulsing animation */
     animation: pulse 1.5s infinite;
 }
 
+/* Pulsing ring animation for live indicator */
 @keyframes pulse {
+    /* Start with no shadow */
     0% { box-shadow: 0 0 0 0 rgba(225, 29, 72, 0.7); }
+    
+    /* Expand and fade the ring */
     70% { box-shadow: 0 0 0 10px rgba(225, 29, 72, 0); }
+    
+    /* Complete cycle */
     100% { box-shadow: 0 0 0 0 rgba(225, 29, 72, 0); }
 }
 
-/* Status Badges */
+/* ============================================
+   STATUS BADGES
+   ============================================ */
+
+/* Present status badge - green theme */
 .badge-status-present {
+    /* Light green background */
     background-color: #D1FAE5;
+    
+    /* Dark green text for contrast */
     color: #065F46;
+    
+    /* Comfortable padding */
     padding: 6px 12px;
+    
+    /* Pill-shaped badge */
     border-radius: 20px;
 }
 
+/* Absent status badge - red theme */
 .badge-status-absent {
+    /* Light red/pink background */
     background-color: #FFE4E6;
+    
+    /* Dark red text for contrast */
     color: #9F1239;
+    
+    /* Matching padding */
     padding: 6px 12px;
+    
+    /* Pill-shaped badge */
     border-radius: 20px;
 }
 
-/* Scanner Overlay (Viewfinder) */
+/* ============================================
+   QR SCANNER OVERLAY
+   ============================================ */
+
+/* Container for QR code reader viewport */
 #reader {
+    /* Full width of parent container */
     width: 100%;
+    
+    /* Rounded corners for visual consistency */
     border-radius: 16px;
+    
+    /* Prevent child elements from breaking border radius */
     overflow: hidden;
 }
+
+/* ============================================
+   OUTLINE BUTTON VARIANT
+   ============================================ */
+
+/* Outline button base state */
 .btn-outline-primary {
+    /* Green text */
     color: var(--primary-color) !important;
+    
+    /* Green border */
     border-color: var(--primary-color) !important;
 }
 
+/* Outline button hover - inverted colors */
 .btn-outline-primary:hover {
+    /* Green background on hover */
     background-color: var(--primary-color) !important;
+    
+    /* White text for contrast */
     color: #fff !important;
+    
+    /* Maintain border color */
     border-color: var(--primary-color) !important;
 }
 
-/* Fix the focus ring for outline buttons too */
+/* Focus ring for outline buttons */
 .btn-outline-primary:focus, 
 .btn-outline-primary:active {
+    /* Green glow effect matching primary buttons */
     box-shadow: 0 0 0 0.25rem rgba(16, 185, 129, 0.4) !important;
 }
+
+/* ============================================
+   5. BOOTSTRAP OVERRIDES
+   ============================================ */
+
+/* Override Bootstrap's default blue primary text */
+.text-primary {
+    color: var(--primary-color) !important;
+}
+
+/* Override Bootstrap's default blue primary background */
+.bg-primary {
+    background-color: var(--primary-color) !important;
+}
+
+/* ============================================
+   SCROLLABLE TABLE CONTAINER
+   ============================================ */
+
+/* Constrained height container for live student telemetry */
+.table-scrollable {
+    /* Maximum height before scrolling */
+    max-height: 300px;
+    
+    /* Enable vertical scrolling when content exceeds max-height */
+    overflow-y: auto;
+}
+

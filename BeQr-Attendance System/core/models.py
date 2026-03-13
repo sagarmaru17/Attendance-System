@@ -83,6 +83,7 @@ class AttendanceSession(models.Model):
     def __str__(self):
         return f"{self.subject} ({self.course_name}) - {self.teacher.username}"
 
+
 class Attendance(models.Model):
     STATUS_CHOICES = (
         ('pending', 'Pending'),
@@ -92,11 +93,42 @@ class Attendance(models.Model):
     )
     student = models.ForeignKey(CustomUser, on_delete=models.CASCADE, limit_choices_to={'role': 'student'})
     lecture = models.ForeignKey(Lecture, on_delete=models.CASCADE, null=True, blank=True)
-    session = models.ForeignKey(AttendanceSession, on_delete=models.CASCADE, null=True, blank=True) # Link to active session
+    session = models.ForeignKey(AttendanceSession, on_delete=models.CASCADE, null=True, blank=True)
     
     time_in = models.DateTimeField(null=True, blank=True)
     time_out = models.DateTimeField(null=True, blank=True)
     status = models.CharField(max_length=15, choices=STATUS_CHOICES, default='pending')
 
+    # --- NEW: SECURITY & AUDIT FIELDS ---
+    device_fingerprint = models.CharField(max_length=255, blank=True, null=True, help_text="Used to block buddy punching")
+    scanned_ip = models.GenericIPAddressField(null=True, blank=True)
+    scanned_latitude = models.FloatField(null=True, blank=True)
+    scanned_longitude = models.FloatField(null=True, blank=True)
+
+    class Meta:
+        # Enforce that a student can only have one attendance record per live session
+        unique_together = ('student', 'session')
+
     def __str__(self):
-        return f"{self.student.username} - {self.lecture.name if self.lecture else 'No Lecture'} - {self.status}"
+        return f"{self.student.username} - {self.session.subject if self.session else 'No Session'} - {self.status}"
+    
+
+# class Attendance(models.Model):
+#     STATUS_CHOICES = (
+#         ('pending', 'Pending'),
+#         ('present', 'Present'),
+#         ('absent', 'Absent'),
+#         ('incomplete', 'Incomplete'),
+#     )
+#     student = models.ForeignKey(CustomUser, on_delete=models.CASCADE, limit_choices_to={'role': 'student'})
+#     lecture = models.ForeignKey(Lecture, on_delete=models.CASCADE, null=True, blank=True)
+#     session = models.ForeignKey(AttendanceSession, on_delete=models.CASCADE, null=True, blank=True) # Link to active session
+    
+#     time_in = models.DateTimeField(null=True, blank=True)
+#     time_out = models.DateTimeField(null=True, blank=True)
+#     status = models.CharField(max_length=15, choices=STATUS_CHOICES, default='pending')
+
+#     def __str__(self):
+#         return f"{self.student.username} - {self.lecture.name if self.lecture else 'No Lecture'} - {self.status}"
+    
+

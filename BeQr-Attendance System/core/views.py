@@ -9,11 +9,13 @@ from .forms import StudentRegistrationForm, PasswordResetVerificationForm
 from .models import Lecture, Attendance, CustomUser, AllowedStudent, AttendanceSession
 import uuid
 import jwt
-import qrcode
+import qrcode, csv
 from io import BytesIO
 from datetime import timedelta
 from django.core.files import File
 from django.conf import settings
+from django.db.models import Count, Q
+
 
 # --- HELPER FUNCTION: Get Teacher's IP ---
 def get_client_ip(request):
@@ -119,38 +121,84 @@ def reset_password_confirm_view(request):
 
 # --- TEACHER VIEWS ---
 
+# @login_required
+# def teacher_dashboard_view(request):
+#     if request.user.role != 'teacher':
+#         messages.warning(request, "Access denied. Restricted to faculty.")
+#         return redirect('student_dashboard')
+
+#     # 1. Fetch Teacher's Lectures
+#     my_lectures = Lecture.objects.filter(teacher=request.user).order_by('-created_at')
+    
+#     # 2. Fetch Student Stats
+#     registered_count = CustomUser.objects.filter(role='student').count()
+#     total_allowed = AllowedStudent.objects.count()
+    
+#     # 3. Fetch the actual list (for the popup)
+#     allowed_students_list = AllowedStudent.objects.all().order_by('enrollment_number')
+
+#     # 4. Check if there is already an ACTIVE session for this teacher
+#     active_session = AttendanceSession.objects.filter(teacher=request.user, is_active=True).first()
+
+#     # 5. NEW: Fetch live checked-in students for the active session
+#     live_students = []
+#     if active_session:
+#         live_students = Attendance.objects.filter(session=active_session).order_by('-time_in')
+
+#     context = {
+#         'teacher': request.user,
+#         'lectures': my_lectures,
+#         'registered_count': max(0, registered_count - 1),  # Exclude admin/test accounts if needed
+#         'total_allowed': total_allowed,
+#         'allowed_students': allowed_students_list, 
+#         'active_session': active_session, 
+#         'live_students': live_students, # Pass to the template telemetry table
+#     }
+    
+#     return render(request, 'core/teacher/dashboard.html', context)
+
+
 @login_required
 def teacher_dashboard_view(request):
     if request.user.role != 'teacher':
         messages.warning(request, "Access denied. Restricted to faculty.")
         return redirect('student_dashboard')
 
-    # 1. Fetch Teacher's Lectures
-    my_lectures = Lecture.objects.filter(teacher=request.user).order_by('-created_at')
-    
-    # 2. Fetch Student Stats
+    # Fetch Student Stats
     registered_count = CustomUser.objects.filter(role='student').count()
     total_allowed = AllowedStudent.objects.count()
-    
-    # 3. Fetch the actual list (for the popup)
     allowed_students_list = AllowedStudent.objects.all().order_by('enrollment_number')
 
-    # 4. Check if there is already an ACTIVE session for this teacher
+    # Check for active session
     active_session = AttendanceSession.objects.filter(teacher=request.user, is_active=True).first()
-
-    # 5. NEW: Fetch live checked-in students for the active session
     live_students = []
     if active_session:
         live_students = Attendance.objects.filter(session=active_session).order_by('-time_in')
 
+    # --- NEW: Fetch Past Sessions & Calculate Stats ---
+    all_past_sessions = AttendanceSession.objects.filter(
+        teacher=request.user, 
+        is_active=False
+    ).annotate(
+        present_count=Count('attendance', filter=Q(attendance__status='present')),
+        absent_count=Count('attendance', filter=Q(attendance__status='absent')),
+        incomplete_count=Count('attendance', filter=Q(attendance__status='incomplete'))
+    ).order_by('-start_time')
+    
+    # Show only last 10 by default, but pass all sessions to template
+    past_sessions = list(all_past_sessions)
+    has_more = len(past_sessions) > 10
+
     context = {
         'teacher': request.user,
-        'lectures': my_lectures,
-        'registered_count': max(0, registered_count - 1),  # Exclude admin/test accounts if needed
+        'past_sessions': past_sessions,
+        'has_more_sessions': has_more,
+        'total_sessions': len(past_sessions),
+        'registered_count': max(0, registered_count - 1),
         'total_allowed': total_allowed,
         'allowed_students': allowed_students_list, 
         'active_session': active_session, 
-        'live_students': live_students, # Pass to the template telemetry table
+        'live_students': live_students,
     }
     
     return render(request, 'core/teacher/dashboard.html', context)
@@ -244,16 +292,112 @@ def end_class_view(request):
             file_name = f'checkout_qr_{session.session_id}.png'
             session.qr_code.save(file_name, File(buffer), save=True)
 
+        # ...existing code...
         elif action == 'close_session':
             # Phase 3: Finalize everything
             session.is_active = False
             session.end_time = timezone.now()
             session.save()
             
-            # Mark incomplete students as absent
+            # Mark incomplete students as absent (Optional logic based on your requirements)
             Attendance.objects.filter(session=session, status='incomplete').update(status='absent')
+            
+            messages.success(request, "Class session ended successfully.")
 
     return redirect('teacher_dashboard')
+
+@login_required
+def generate_report_view(request):
+    if request.user.role != 'teacher':
+        messages.error(request, "Access denied.")
+        return redirect('login')
+
+    if request.method == 'POST':
+        # 1. Get the data submitted from the Modal form
+        subject = request.POST.get('subject')
+        report_type = request.POST.get('report_type')
+        start_date = request.POST.get('start_date')
+        end_date = request.POST.get('end_date')
+
+        # 2. Setup the HTTP Response to act as a downloadable CSV file
+        response = HttpResponse(content_type='text/csv')
+        filename = f"BeQr_{report_type}_{subject}_{start_date}_to_{end_date}.csv"
+        response['Content-Disposition'] = f'attachment; filename="{filename}"'
+
+        writer = csv.writer(response)
+
+        # 3. Fetch all COMPLETED sessions for this teacher, subject, and date range
+        sessions = AttendanceSession.objects.filter(
+            teacher=request.user,
+            subject=subject,
+            start_time__date__gte=start_date, # Greater than or equal to start_date
+            start_time__date__lte=end_date,   # Less than or equal to end_date
+            is_active=False  # Only include closed classes
+        )
+
+        # --- REPORT LOGIC A: Monthly Master List ---
+        if report_type == 'master':
+            writer.writerow(['Roll Number', 'Student Name', 'Date', 'Topic', 'Status'])
+            attendances = Attendance.objects.filter(session__in=sessions).order_by('session__start_time', 'student__roll_number')
+            
+            for att in attendances:
+                writer.writerow([
+                    att.student.roll_number,
+                    f"{att.student.first_name} {att.student.last_name}",
+                    att.session.start_time.strftime('%d-%b-%Y'),
+                    att.session.topic,
+                    att.get_status_display()
+                ])
+
+        # --- REPORT LOGIC B: 75% Defaulter List ---
+        elif report_type == 'defaulter':
+            writer.writerow(['Roll Number', 'Student Name', 'Total Classes', 'Classes Attended', 'Attendance %', 'Action'])
+            total_classes = sessions.count()
+            
+            if total_classes > 0:
+                # Get all students
+                students = CustomUser.objects.filter(role='student').order_by('roll_number')
+                for student in students:
+                    # Count how many times this student was 'present' in the filtered sessions
+                    attended = Attendance.objects.filter(student=student, session__in=sessions, status='present').count()
+                    percentage = (attended / total_classes) * 100
+                    
+                    # ONLY write them to the file if they are below 75%
+                    if percentage < 75.0:
+                        writer.writerow([
+                            student.roll_number,
+                            f"{student.first_name} {student.last_name}",
+                            total_classes,
+                            attended,
+                            f"{percentage:.2f}%",
+                            "Defaulter Alert"
+                        ])
+            else:
+                writer.writerow(['No classes found in this date range.'])
+
+        # --- REPORT LOGIC C: Security & Telemetry Audit ---
+        elif report_type == 'audit':
+            writer.writerow(['Roll Number', 'Student Name', 'Date', 'Time In', 'Time Out', 'Final Status', 'Scanned IP', 'GPS Latitude', 'GPS Longitude'])
+            attendances = Attendance.objects.filter(session__in=sessions).order_by('session__start_time', 'student__roll_number')
+            
+            for att in attendances:
+                writer.writerow([
+                    att.student.roll_number,
+                    f"{att.student.first_name} {att.student.last_name}",
+                    att.session.start_time.strftime('%d-%b-%Y'),
+                    att.time_in.strftime('%I:%M %p') if att.time_in else 'Missed',
+                    att.time_out.strftime('%I:%M %p') if att.time_out else 'Missed',
+                    att.get_status_display(),
+                    att.scanned_ip or 'N/A',
+                    att.scanned_latitude or 'N/A',
+                    att.scanned_longitude or 'N/A'
+                ])
+
+        return response # This triggers the download in the browser!
+
+    return redirect('teacher_dashboard')
+
+
 
 
 # --- STUDENT VIEWS ---
