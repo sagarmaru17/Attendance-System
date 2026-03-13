@@ -1,6 +1,97 @@
 {% extends 'core/base.html' %}
 {% load static %}
 
+{# ============================================================
+   STUDENT DASHBOARD
+   ============================================================
+   
+   Main student interface for QR-based attendance scanning.
+   
+   KEY COMPONENTS:
+   
+   1. STUDENT PROFILE CARD (Top section)
+      - Displays: Name, Roll Number, Enrollment Number, Email
+      - Primary color themed (green background)
+      - Shows student enrollment details
+   
+   2. RECENT ACTIVITY SECTION
+      - Lists last 5 attendance records
+      - Shows: Subject, Date/Time, Status badge
+      - Status badges: Green=Present, Yellow=Incomplete, Red=Absent
+      - Empty state message if no records exist
+   
+   3. QR SCANNER (Floating Action Button - FAB)
+      - Green circular button at bottom right
+      - Opens #scannerModal when clicked
+      - Triggers camera access for QR code scanning
+   
+   4. SCANNER MODAL (#scannerModal)
+      - Full-screen camera feed for QR detection
+      - Uses html5-qrcode library (JavaScript library)
+      - Auto-starts camera on modal open
+      - Auto-stops camera on modal close (battery saving)
+      - Processing overlay shows during QR processing
+      - Detects QR codes in real-time
+   
+   5. CONFIRMATION MODAL (#confirmationModal)
+      - Shows lecture details after QR scan
+      - Displays:
+        * Scan Type: "Starting Lecture" (green) or "Ending Lecture" (red)
+        * Lecture Subject (large header)
+        * Faculty Name and Topic (info cards)
+        * Date & Time (with calendar icon)
+      - Verification message asking user to confirm details
+      - Cancel or Confirm & Submit buttons
+   
+   6. HIDDEN FORM (#scanSubmitForm)
+      - Submits to /student/process_scan/
+      - Contains: qr_token, latitude, longitude, csrf_token
+      - Submitted automatically after user confirms attendance
+   
+   SECURITY ARCHITECTURE:
+   
+   Layer 1: Time & Cryptography
+   - JWT token with 15-minute expiry for check-in
+   - JWT token with 10-minute expiry for check-out
+   - Token signature validation using Django SECRET_KEY
+   
+   Layer 2: Geofencing
+   - GPS coordinates validated against teacher's location
+   - 50-meter radius radius allowed
+   - Prevents attendance from outside classroom
+   
+   Layer 3: Network Validation
+   - Student IP must be on same subnet as teacher (/24 CIDR)
+   - Ensures student is on college WiFi
+   
+   Layer 4: Device Fingerprinting
+   - Unique device ID stored in secure httponly cookie
+   - Prevents same device used by multiple students in same session
+   - Lasts for 1 year
+   
+   ATTENDANCE STATUSES:
+   - pending: Initial state when attendance created
+   - incomplete: Student checked in but not checked out
+   - present: Student completed both check-in and check-out
+   - absent: Student never scanned (auto-marked after session ends)
+   
+   WORKFLOW:
+   1. Student clicks FAB button → #scannerModal opens
+   2. Camera auto-starts, student points at QR code
+   3. onScanSuccess() triggered → QR code decoded
+   4. JWT token extracted → session_id and scan_type obtained
+   5. /api/session/{sessionId}/?type={scanType} API call made
+   6. Response populates #confirmationModal with lecture details
+   7. Scan type banner updated (Starting/Ending Lecture indicator)
+   8. Student reads details and clicks "Confirm & Submit"
+   9. GPS location requested (browser geolocation API)
+   10. Coordinates added to hidden form
+   11. Form auto-submitted to /student/process_scan/
+   12. Server validates all 4 security layers
+   13. If all pass: Attendance record updated, redirect to dashboard
+   14. If any fail: Error message shown, scanner resumes
+#}
+
 {% comment %} {% block content %}
 <div class="row justify-content-center">
     <div class="col-md-6 col-lg-5">
@@ -93,11 +184,12 @@
         
         <div class="card shadow-sm border-0 mb-4 rounded-4" style="background-color: var(--primary-color);">
             <div class="card-body p-4 text-white">
-                <div class="d-flex align-items-center">
+                <div class="d-flex align-items-start">
                     <div class="flex-grow-1">
-                        <h3 class="fw-bold mb-1">{{ student.first_name }} {{ student.last_name }}</h3>
-                        <p class="mb-0 opacity-75"><i class="bi bi-person-badge me-2"></i>Roll No: {{ student.roll_number }}</p>
-                        <p class="mb-0 opacity-75"><i class="bi bi-card-text me-2"></i>Enrollment: {{ student.enrollment_number }}</p>
+                        <h3 class="fw-bold mb-2">{{ student.first_name }} {{ student.last_name }}</h3>
+                        <p class="mb-2 opacity-75 small"><i class="bi bi-person-badge me-2"></i>Roll No: {{ student.roll_number }}</p>
+                        <p class="mb-2 opacity-75 small"><i class="bi bi-card-text me-2"></i>Enrollment: {{ student.enrollment_number }}</p>
+                        <p class="mb-0 opacity-75 small"><i class="bi bi-envelope me-2"></i>{{ student.email }}</p>
                     </div>
                     <div class="display-1 opacity-25">
                         <i class="bi bi-mortarboard-fill"></i>
@@ -147,6 +239,7 @@
     <i class="bi bi-qr-code-scan"></i>
 </button>
 
+<!-- Scanner Modal -->
 <div class="modal fade" id="scannerModal" tabindex="-1" aria-hidden="true" data-bs-backdrop="static">
     <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content border-0 shadow-lg rounded-4">
@@ -155,14 +248,11 @@
                 <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close" id="closeModalBtn"></button>
             </div>
             <div class="modal-body p-0 text-center bg-dark position-relative">
-                
                 <div id="reader" style="width: 100%; min-height: 300px;"></div>
-                
                 <div id="processingOverlay" class="position-absolute top-0 start-0 w-100 h-100 bg-dark bg-opacity-75 d-flex flex-column justify-content-center align-items-center" style="display: none !important; z-index: 10;">
                     <div class="spinner-border text-success mb-3" role="status" style="width: 3rem; height: 3rem;"></div>
                     <h5 class="text-white fw-bold" id="processingText">Acquiring GPS Lock...</h5>
                 </div>
-
             </div>
             <div class="modal-footer bg-light border-0 justify-content-center">
                 <small class="text-muted"><i class="bi bi-shield-lock me-1"></i> Ensure you are inside the classroom.</small>
@@ -171,12 +261,73 @@
     </div>
 </div>
 
-{% comment %} <form id="scanSubmitForm" action="{% url 'process_scan' %}" method="POST" style="display: none;">
+<!-- QR Code Confirmation Modal -->
+<div class="modal fade" id="confirmationModal" tabindex="-1" aria-hidden="true" data-bs-backdrop="static">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0 shadow-lg rounded-4">
+            <div class="modal-header border-0" style="background-color: var(--primary-color);">
+                <h5 class="modal-title text-white fw-bold"><i class="bi bi-check-circle me-2"></i><span id="confirmModalTitle">Confirm Attendance</span></h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close" id="closeConfirmBtn"></button>
+            </div>
+            <div class="modal-body p-4">
+                <div class="alert alert-info border-0 rounded-3 mb-3" style="background-color: #e7f3ff;">
+                    <div class="text-center">
+                        <h6 class="fw-bold mb-2" id="scanTypeDisplay" style="color: var(--primary-color); font-size: 1.1rem;">
+                            <i class="bi bi-play-circle me-2"></i>Starting Lecture
+                        </h6>
+                    </div>
+                </div>
+                <div class="card border-0 shadow-sm rounded-3 mb-3">
+                    <div class="card-body p-3" style="border-left: 4px solid var(--primary-color);">
+                        <h6 class="text-muted small mb-2">Lecture</h6>
+                        <h4 class="fw-bold mb-0" id="confirmSubject">-</h4>
+                    </div>
+                </div>
+                <div class="row g-2">
+                    <div class="col-6">
+                        <div class="card border-0 shadow-sm rounded-3">
+                            <div class="card-body p-3">
+                                <h6 class="text-muted small mb-2"><i class="bi bi-person-fill me-1"></i>Faculty</h6>
+                                <p class="fw-bold mb-0 small" id="confirmFaculty">-</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-6">
+                        <div class="card border-0 shadow-sm rounded-3">
+                            <div class="card-body p-3">
+                                <h6 class="text-muted small mb-2"><i class="bi bi-book-fill me-1"></i>Topic</h6>
+                                <p class="fw-bold mb-0 small" id="confirmTopic">-</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="card border-0 shadow-sm rounded-3 mt-3">
+                    <div class="card-body p-3">
+                        <h6 class="text-muted small mb-2"><i class="bi bi-calendar-event me-1"></i>Date & Time</h6>
+                        <p class="fw-bold mb-0 small" id="confirmDateTime">-</p>
+                    </div>
+                </div>
+                <div class="alert alert-info mt-4" role="alert">
+                    <i class="bi bi-info-circle me-2"></i>
+                    <small>Please verify the details match your current class before proceeding.</small>
+                </div>
+            </div>
+            <div class="modal-footer bg-light border-0">
+                <button type="button" class="btn btn-outline-secondary rounded-3" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-primary rounded-3" id="confirmSubmitBtn">
+                    <i class="bi bi-check-lg me-2"></i>Confirm & Submit
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<form id="scanSubmitForm" action="{% url 'process_scan' %}" method="POST" style="display: none;">
     {% csrf_token %}
     <input type="hidden" name="qr_token" id="qr_token_input">
     <input type="hidden" name="latitude" id="student_lat_input">
     <input type="hidden" name="longitude" id="student_lon_input">
-</form> {% endcomment %}
+</form> 
 
 {% endblock %}
 
@@ -227,6 +378,36 @@
             processingOverlay.style.setProperty('display', 'none', 'important');
         });
 
+        // When the confirmation modal closes/gets canceled, resume the scanner
+        const confirmationModal = document.getElementById('confirmationModal');
+        confirmationModal.addEventListener('hidden.bs.modal', function () {
+            // Resume the scanner if it's paused
+            if (html5QrcodeScanner && scannerModal.classList.contains('show')) {
+                html5QrcodeScanner.resume().catch(err => {
+                    console.error("Failed to resume scanner", err);
+                });
+            }
+            // Reset processing overlay
+            processingOverlay.style.setProperty('display', 'none', 'important');
+        });
+
+        // Helper: Decode JWT manually (not using external library)
+        function decodeJWT(token) {
+            try {
+                const parts = token.split('.');
+                if (parts.length !== 3) throw new Error('Invalid token format');
+                
+                // Decode the payload (second part)
+                const payload = parts[1];
+                const padded = payload + '=='.substring(0, (4 - payload.length % 4) % 4);
+                const decoded = atob(padded);
+                return JSON.parse(decoded);
+            } catch (error) {
+                console.error('JWT decode error:', error);
+                return null;
+            }
+        }
+
         // What happens when a QR code is successfully read
         function onScanSuccess(decodedText, decodedResult) {
             // 1. Immediately pause the scanner so it doesn't scan twice
@@ -234,11 +415,63 @@
             
             // 2. Show the processing overlay
             processingOverlay.style.setProperty('display', 'flex', 'important');
+            processingText.innerText = "Processing QR Code...";
             
-            // 3. Put the read token into our hidden form
+            // 3. Decode JWT to extract session_id and scan type
+            const jwtData = decodeJWT(decodedText);
+            if (!jwtData || !jwtData.session_id) {
+                alert("Invalid QR code format!");
+                processingOverlay.style.setProperty('display', 'none', 'important');
+                html5QrcodeScanner.resume();
+                return;
+            }
+            
+            const scanType = jwtData.type || 'check_in'; // Default to check_in
+            
+            // 4. Store token for later submission
             document.getElementById('qr_token_input').value = decodedText;
+            
+            // 5. Fetch session details from API with scan type
+            fetch('/api/session/' + jwtData.session_id + '/?type=' + scanType)
+                .then(response => {
+                    if (!response.ok) throw new Error('Session not found');
+                    return response.json();
+                })
+                .then(data => {
+                    // 6. Populate confirmation modal with lecture details
+                    document.getElementById('confirmSubject').innerText = data.subject || '-';
+                    document.getElementById('confirmFaculty').innerText = data.teacher_name || '-';
+                    document.getElementById('confirmTopic').innerText = data.topic || '-';
+                    document.getElementById('confirmDateTime').innerText = data.date_time || '-';
+                    
+                    // 7. Display scan type with appropriate icon and color
+                    const scanTypeDisplay = document.getElementById('scanTypeDisplay');
+                    if (scanType === 'check_out') {
+                        scanTypeDisplay.innerHTML = '<i class="bi bi-stop-circle me-2"></i>Ending Lecture';
+                        scanTypeDisplay.style.color = '#dc3545'; // Red for end
+                    } else {
+                        scanTypeDisplay.innerHTML = '<i class="bi bi-play-circle me-2"></i>Starting Lecture';
+                        scanTypeDisplay.style.color = 'var(--primary-color)'; // Primary color for start
+                    }
+                    
+                    // 8. Hide processing, show confirmation modal
+                    processingOverlay.style.setProperty('display', 'none', 'important');
+                    const confirmModal = new bootstrap.Modal(document.getElementById('confirmationModal'));
+                    confirmModal.show();
+                })
+                .catch(error => {
+                    console.error('Error fetching session:', error);
+                    alert("Could not fetch session details. Please try again.");
+                    processingOverlay.style.setProperty('display', 'none', 'important');
+                    html5QrcodeScanner.resume();
+                });
+        }
 
-            // 4. Fetch the student's live GPS coordinates
+        // When confirmation button is clicked, acquire GPS and submit
+        document.getElementById('confirmSubmitBtn').addEventListener('click', function() {
+            processingOverlay.style.setProperty('display', 'flex', 'important');
+            processingText.innerText = "Acquiring location...";
+            
             if (navigator.geolocation) {
                 navigator.geolocation.getCurrentPosition(
                     function(position) {
@@ -248,11 +481,13 @@
                         
                         processingText.innerText = "Verifying with server...";
                         
-                        // 5. Submit the form to Django!
+                        // Close modal and submit form
+                        const confirmModal = bootstrap.Modal.getInstance(document.getElementById('confirmationModal'));
+                        confirmModal.hide();
+                        
                         scanForm.submit();
                     },
                     function(error) {
-                        // Failed to get GPS
                         alert("We need your location to verify you are in class! Please enable Location Services.");
                         processingOverlay.style.setProperty('display', 'none', 'important');
                         html5QrcodeScanner.resume();
@@ -264,7 +499,7 @@
                 processingOverlay.style.setProperty('display', 'none', 'important');
                 html5QrcodeScanner.resume();
             }
-        }
+        });
     });
 </script>
 {% endblock %}

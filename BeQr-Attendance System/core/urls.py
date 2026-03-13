@@ -20,5 +20,8 @@ urlpatterns = [
 
 
     path('student/dashboard/', views.student_dashboard_view, name='student_dashboard'),
-
+    path('student/process_scan/', views.process_scan_view, name='process_scan'),# URL for processing the QR scan
+    
+    # API Endpoints
+    path('api/session/<str:session_id>/', views.get_session_details, name='get_session_details'),
 ]

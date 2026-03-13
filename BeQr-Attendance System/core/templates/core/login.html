@@ -1,6 +1,20 @@
 {% extends 'core/base.html' %}
 {% load static %}
 
+{# ============================================================
+   LOGIN PAGE
+   ============================================================
+   
+   User authentication page for both Teachers and Students.
+   Form accepts:
+   - username: Teacher/Student enrollment number or username
+   - password: Account password
+   
+   Links:
+   - Forgot password: Reset account password via verification
+   - Create Account: Sign up as new student
+#}
+
 {% block content %}
 <div class="row justify-content-center align-items-center" style="height: 80vh;">
     <div class="col-md-5 col-lg-4">

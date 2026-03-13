@@ -1,6 +1,26 @@
 {% extends 'core/base.html' %}
 {% load static %}
 
+{# ============================================================
+   REGISTRATION PAGE
+   ============================================================
+   
+   Student account creation form.
+   Required fields:
+   - Username: Unique username for login
+   - First Name: Student's first name
+   - Last Name: Student's last name
+   - Email: Contact email address
+   - Enrollment Number: University enrollment number (must be in AllowedStudent list)
+   - Roll Number: Class roll number
+   - Password: Secure password (2 matching password fields)
+   
+   Validation:
+   - Enrollment number must exist in the allowed students list
+   - Enrollment number cannot be already registered
+   - Passwords must match and meet security requirements
+#}
+
 {% block content %}
 <div class="row justify-content-center align-items-center" style="min-height: 80vh;">
     <div class="col-md-5 col-lg-4">
@@ -20,13 +40,20 @@
                     {% for field in form %}
                         <div class="mb-3">
                             <label class="form-label small fw-bold text-secondary">{{ field.label }}</label>
-                            <input type="{{ field.field.widget.input_type }}" 
-                                   name="{{ field.name }}" 
-                                   class="form-control" 
-                                   {% if field.field.required %}required{% endif %}>
+                            {% if field.field.widget.input_type == "password" %}
+                                <input type="password" 
+                                       name="{{ field.name }}" 
+                                       class="form-control" 
+                                       {% if field.field.required %}required{% endif %}>
+                            {% else %}
+                                <input type="text" 
+                                       name="{{ field.name }}" 
+                                       class="form-control" 
+                                       {% if field.field.required %}required{% endif %}>
+                            {% endif %}
                             
                             {% if field.help_text %}
-                                <small class="text-muted" style="font-size: 0.75rem;">{{ field.help_text }}</small>
+                                <small class="text-muted" style="font-size: 0.75rem;">{{ field.help_text|safe }}</small>
                             {% endif %}
                             
                             {% for error in field.errors %}

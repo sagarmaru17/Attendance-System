@@ -1,4 +1,28 @@
 {% load static %}
+{# ============================================================
+   BASE TEMPLATE - Core Layout & Navigation
+   ============================================================
+   
+   Master template that all pages extend.
+   Provides:
+   - Global navigation bar with role-based menu links
+   - Static resources (Bootstrap 5, Icons, Fonts, Custom CSS)
+   - Message display for alerts, errors, and notifications
+   - Page layout structure with container
+   
+   Role-based navigation:
+   - Teachers see: Dashboard, My Classes, Reports
+   - Students see: Home, History, Profile
+   - Non-authenticated users see: Sign Up, Login buttons
+   
+   Features:
+   1. Sticky navigation bar with logo and user info
+   2. Responsive hamburger menu for mobile devices
+   3. Django messages framework for flash messages
+   4. Bootstrap components and Bootstrap Icons
+   5. Custom styling from static/css/style.css
+#}
+
 <!DOCTYPE html>
 <html lang="en">
 <head>

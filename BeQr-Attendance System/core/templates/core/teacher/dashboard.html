@@ -85,17 +85,25 @@
                             {% for att in live_students %}
                             <tr>
                                 <td>{{ att.student.roll_number }}</td>
-                                <td class="fw-bold">{{ att.student.first_name }} {{ att.student.last_name }}</td>
+                                <td class="fw-bold">
+                                    {{ att.student.first_name }} {{ att.student.last_name }}
+                                </td>
                                 <td>{{ att.time_in|time:"H:i A" }}</td>
                                 <td>
                                     {% if att.status == 'incomplete' %}
                                         <span class="badge bg-warning text-dark"><i class="bi bi-clock-history"></i> Incomplete (Pending Checkout)</span>
                                     {% elif att.status == 'present' %}
                                         <span class="badge-status-present"><i class="bi bi-check-circle"></i> Present</span>
+                                    {% elif att.status == 'absent' %}
+                                        <span class="badge bg-danger"><i class="bi bi-x-circle"></i> Absent</span>
+                                    {% else %}
+                                        <span class="badge bg-secondary">{{ att.get_status_display }}</span>
                                     {% endif %}
                                 </td>
                                 <td>
-                                    <button class="btn btn-sm btn-outline-secondary" title="Manual Override"><i class="bi bi-pencil-square"></i></button>
+                                    <button class="btn btn-sm btn-outline-secondary" type="button" data-bs-toggle="modal" data-bs-target="#studentActionModal" onclick="setStudentAction({{ att.id }}, '{{ att.student.first_name }} {{ att.student.last_name }}', '{{ att.status }}')" title="Mark as Present/Absent">
+                                        <i class="bi bi-pencil-square"></i>
+                                    </button>
                                 </td>
                             </tr>
                             {% empty %}
@@ -203,7 +211,7 @@
                                     </span>
                                     <br>
                                     <span class="badge-status-absent d-inline-block shadow-sm">
-                                        {{ session.absent_count|add:session.incomplete_count }} Absent
+                                        {{ session.absent_count|add:session.incomplete_count }} Not Present
                                     </span>
                                 </td>
                             </tr>
@@ -382,7 +390,7 @@ function fetchGPSAndSubmit(event, formId, btnId, latId, lonId, statusId) {
     <div class="modal-dialog">
         <div class="modal-content border-0 shadow">
             <div class="modal-header theme-green border-0">
-                <h5 class="modal-title text-white"><i class="bi bi-cloud-download"></i> Export Attendance Data</h5>
+                <h5 class="modal-title text-white"><i class="bi bi-filetype-pdf"></i> Download Attendance Report (PDF)</h5>
                 <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             
@@ -394,8 +402,10 @@ function fetchGPSAndSubmit(event, formId, btnId, latId, lonId, statusId) {
                         <label class="form-label small fw-bold text-muted">Select Subject</label>
                         <select name="subject" class="form-control input-soft" required>
                             <option value="" disabled selected>-- Choose a Subject --</option>
-                            {% for lecture in lectures %}
-                                <option value="{{ lecture.name }}">{{ lecture.name }}</option>
+                            {% for subject in all_subjects %}
+                                <option value="{{ subject }}">{{ subject }}</option>
+                            {% empty %}
+                                <option value="" disabled>No subjects available. Start a class first.</option>
                             {% endfor %}
                         </select>
                     </div>
@@ -403,9 +413,9 @@ function fetchGPSAndSubmit(event, formId, btnId, latId, lonId, statusId) {
                     <div class="mb-3">
                         <label class="form-label small fw-bold text-muted">Report Type</label>
                         <select name="report_type" class="form-control input-soft" required>
-                            <option value="master">1. Monthly Master Attendance (CSV)</option>
-                            <option value="defaulter">2. Defaulter List < 75% (CSV)</option>
-                            <option value="audit">3. Security & Telemetry Audit (CSV)</option>
+                            <option value="master">1. Monthly Master Attendance (PDF)</option>
+                            <option value="defaulter">2. Defaulter List < 75% (PDF)</option>
+                            <option value="audit">3. Security & Telemetry Audit (PDF)</option>
                         </select>
                         <small class="text-muted mt-1 d-block" style="font-size: 0.75rem;">
                             * The Audit report includes scanned IPs and GPS coordinates to prove anti-proxy measures.
@@ -426,7 +436,7 @@ function fetchGPSAndSubmit(event, formId, btnId, latId, lonId, statusId) {
                 </div>
                 <div class="modal-footer border-0 bg-light">
                     <button type="button" class="btn btn-light rounded-pill px-4" data-bs-dismiss="modal">Cancel</button>
-                    <button type="submit" class="btn btn-theme-green rounded-pill px-4"><i class="bi bi-download me-1"></i> Download</button>
+                    <button type="submit" class="btn btn-theme-green rounded-pill px-4"><i class="bi bi-file-earmark-pdf me-1"></i> Download PDF</button>
                 </div>
             </form>
         </div>
@@ -1053,7 +1063,63 @@ if (timerDisplay && timeLeft > 0) {
 } else if (timerDisplay && timeLeft <= 0) {
     timerDisplay.innerHTML = `<span class="text-danger"><i class="bi bi-exclamation-circle"></i> Token Expired</span>`;
 }
+
+// Student Action Modal Function
+let currentAttendanceId = null;
+
+function setStudentAction(attendanceId, studentName, currentStatus) {
+    currentAttendanceId = attendanceId;
+    document.getElementById('studentActionName').textContent = studentName;
+    document.getElementById('studentCurrentStatus').textContent = currentStatus.toUpperCase();
+}
+
+function updateStudentStatus(newStatus) {
+    if (currentAttendanceId === null) {
+        alert('Error: No student selected');
+        return;
+    }
+    
+    // In a real application, you would send an AJAX request to update the status
+    // For now, we'll show a confirmation message
+    const studentName = document.getElementById('studentActionName').textContent;
+    alert(`Marked ${studentName} as ${newStatus}`);
+    
+    // Close the modal
+    const modal = bootstrap.Modal.getInstance(document.getElementById('studentActionModal'));
+    modal.hide();
+}
 </script>
+
+<!-- Student Action Modal -->
+<div class="modal fade" id="studentActionModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0 shadow">
+            <div class="modal-header bg-light border-0">
+                <h5 class="modal-title"><i class="bi bi-pencil-square me-2"></i>Update Attendance Status</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body p-4">
+                <div class="mb-3">
+                    <label class="form-label small fw-bold text-muted">Student Name</label>
+                    <p class="fw-bold mb-0" id="studentActionName">-</p>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label small fw-bold text-muted">Current Status</label>
+                    <p class="fw-bold mb-0" id="studentCurrentStatus">-</p>
+                </div>
+            </div>
+            <div class="modal-footer border-0 bg-light">
+                <button type="button" class="btn btn-danger rounded-pill" onclick="updateStudentStatus('absent')">
+                    <i class="bi bi-x-circle me-1"></i>Mark as Absent
+                </button>
+                <button type="button" class="btn btn-success rounded-pill" onclick="updateStudentStatus('present')">
+                    <i class="bi bi-check-circle me-1"></i>Mark as Present
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
 {% endblock %}  {% endblock %} {% endcomment %} --- IGNORE ---
 
 

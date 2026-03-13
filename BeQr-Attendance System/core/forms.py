@@ -5,13 +5,15 @@ from django.contrib.auth.models import User
 from .models import CustomUser
 
 class StudentRegistrationForm(UserCreationForm):
+    first_name = forms.CharField(max_length=30, required=True, help_text="Your First Name")
+    last_name = forms.CharField(max_length=150, required=True, help_text="Your Last Name")
     enrollment_number = forms.CharField(max_length=50, required=True, help_text="Your University Enrollment No.")
     roll_number = forms.CharField(max_length=20, required=True, help_text="Your Class Roll Number")
     email = forms.EmailField(required=True)
 
     class Meta:
         model = CustomUser
-        fields = ['username', 'email', 'enrollment_number', 'roll_number']
+        fields = ['username', 'first_name', 'last_name', 'email', 'enrollment_number', 'roll_number']
     # --- NEW VALIDATION FUNCTION ---
     def clean_enrollment_number(self):
         enrollment_no = self.cleaned_data.get('enrollment_number')
