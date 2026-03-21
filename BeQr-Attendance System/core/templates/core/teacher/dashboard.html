@@ -2,9 +2,12 @@
 {% load static %}
 
 {% block content %}
+<!-- ===== TEACHER DASHBOARD: MAIN CONTAINER ===== -->
 <div class="row">
     
+    <!-- ===== LEFT SIDEBAR: PROFILE CARD & ACTION BUTTONS ===== -->
     <div class="col-md-4 mb-4">
+        <!-- Professor Profile Card -->
         <div class="card text-white mb-4" style="background-color: var(--primary-color);">
             <div class="card-body p-4">
                 <h2 class="fw-bold mb-2">Professor {{ teacher.last_name }}</h2>
@@ -13,6 +16,7 @@
                 
                 <hr class="bg-white opacity-25 my-4">
                 
+                <!-- Profile Stats: Number of Classes and Registered Students -->
                 <div class="d-flex justify-content-between text-center px-2">
                     <div>
                         <h2 class="fw-bold mb-0">{{ lectures.count }}</h2>
@@ -26,51 +30,65 @@
             </div>
         </div>
 
+        <!-- Action Buttons Section -->
         <div class="d-grid gap-4">
+            <!-- Generate PDF Reports Button - Opens Report Modal -->
             <button type="button" class="btn btn-outline-primary text-start bg-white w-100" data-bs-toggle="modal" data-bs-target="#reportModal">
                 <i class="bi bi-file-earmark-spreadsheet me-2"></i> Generate Reports
             </button>
 
+            <!-- View Allowed Students List - Opens Students Modal -->
             <button type="button" class="btn btn-outline-primary text-start bg-white w-100" data-bs-toggle="modal" data-bs-target="#studentsModal">
                 <i class="bi bi-people me-2"></i> View Allowed List
             </button>
         </div>
     </div>
 
+    <!-- ===== MAIN CONTENT: LIVE SESSION OR HISTORY ===== -->
     <div class="col-md-8">
         
         {% if active_session %}
+        <!-- ===== LIVE CLASS SESSION DISPLAY ===== -->
         <div class="card border-top border-success border-4 h-100">
             <div class="card-body p-4 text-center">
+                <!-- Session Header with Live Indicator -->
                 <h4 class="fw-bold text-success mb-2 d-flex align-items-center justify-content-center">
                     <span class="live-indicator"></span> 
                     Live Session: {{ active_session.subject }} {% if active_session.division %}(Div {{ active_session.division }}){% endif %}
                 </h4>
+                <!-- Session Metadata: Course, Topic, Start Time -->
                 <p class="text-muted">
                     Course: {{ active_session.course_name }} | 
                     Topic: <strong>{{ active_session.topic|default:"N/A" }}</strong> | 
-                    Started at: {{ active_session.start_time|time:"H:i A" }}
+                    Started at: {{ active_session.start_time|time:"h:i A" }}
                 </p>
                 
+                <!-- QR Code Display Section with Timer -->
                 <div class="my-4 bg-light p-3 border d-inline-block shadow-sm" style="border-radius: 16px;">
                     {% if active_session.qr_code %}
+                        <!-- Secure JWT-Encrypted QR Code -->
                         <img src="{{ active_session.qr_code.url }}" alt="Secure QR Code" class="img-fluid mb-2" style="max-width: 250px; border-radius: 10px;">
                         {% if not active_session.is_checkout %}
+                            <!-- Phase 1: Check-In QR (15-minute expiry) -->
                             <h5 class="fw-bold text-primary mb-0" style="color: var(--primary-color) !important;">Phase 1: Check-In Scan</h5>
                             <small class="text-muted fw-bold" id="timerDisplay">Expires in 15:00</small>
                         {% else %}
+                            <!-- Phase 2: Check-Out QR (10-minute expiry) -->
                             <h5 class="fw-bold text-danger mb-0">Phase 2: Check-Out Scan</h5>
                             <small class="text-muted">Final verification before class ends</small>
                         {% endif %}
                     {% else %}
+                        <!-- QR Code Generation Error -->
                         <p class="text-danger">Error Generating QR Code.</p>
                     {% endif %}
                 </div>
 
                 <hr>
                 
+                <!-- ===== LIVE ATTENDANCE TELEMETRY TABLE ===== -->
                 <h5 class="text-start fw-bold mt-4"><i class="bi bi-people-fill me-2"></i>Live Check-Ins ({{ live_students|length }})</h5>
                 <div class="table-responsive text-start" style="max-height: 300px; overflow-y: auto;">
+                    <!-- Real-time Student Attendance Table -->
                     <table class="table table-hover align-middle">
                         <thead class="table-light sticky-top">
                             <tr>
@@ -81,14 +99,17 @@
                                 <th>Action</th>
                             </tr>
                         </thead>
+                        <!-- Student Attendance Records -->
                         <tbody>
                             {% for att in live_students %}
+                            <!-- Individual Student Record -->
                             <tr>
                                 <td>{{ att.student.roll_number }}</td>
                                 <td class="fw-bold">
                                     {{ att.student.first_name }} {{ att.student.last_name }}
                                 </td>
-                                <td>{{ att.time_in|time:"H:i A" }}</td>
+                                <td>{{ att.time_in|time:"h:i A" }}</td>
+                                <!-- Status Badge showing attendance state -->
                                 <td>
                                     {% if att.status == 'incomplete' %}
                                         <span class="badge bg-warning text-dark"><i class="bi bi-clock-history"></i> Incomplete (Pending Checkout)</span>
@@ -100,13 +121,15 @@
                                         <span class="badge bg-secondary">{{ att.get_status_display }}</span>
                                     {% endif %}
                                 </td>
+                                <!-- Action Button to Update Attendance Status -->
                                 <td>
-                                    <button class="btn btn-sm btn-outline-secondary" type="button" data-bs-toggle="modal" data-bs-target="#studentActionModal" onclick="setStudentAction({{ att.id }}, '{{ att.student.first_name }} {{ att.student.last_name }}', '{{ att.status }}')" title="Mark as Present/Absent">
+                                    <button class="btn btn-sm btn-outline-secondary" type="button" title="Mark as Present/Absent" onclick="openActionModal({{ att.id }}, '{{ att.student.first_name|escapejs }} {{ att.student.last_name|escapejs }}', '{{ att.status }}')">
                                         <i class="bi bi-pencil-square"></i>
                                     </button>
                                 </td>
                             </tr>
                             {% empty %}
+                            <!-- No Students Scanned Yet Message -->
                             <tr>
                                 <td colspan="5" class="text-center text-muted py-4">No students have scanned yet. Waiting for telemetry...</td>
                             </tr>
@@ -115,14 +138,17 @@
                     </table>
                 </div>
 
+                <!-- ===== DUAL-PHASE SESSION CONTROL BUTTONS ===== -->
                 <div class="mt-4 pt-3 border-top">
                     <form action="{% url 'end_class' %}" method="POST">
                         {% csrf_token %}
                         {% if not active_session.is_checkout %}
+                            <!-- Phase 1→2: Initiate Check-Out QR Generation -->
                             <button type="submit" name="action" value="initiate_checkout" class="btn btn-warning fw-bold shadow-sm me-2">
                                 <i class="bi bi-qr-code-scan me-2"></i> Generate Check-Out QR
                             </button>
                         {% else %}
+                            <!-- Phase 2: Close Session and Mark Absent Students -->
                             <button type="submit" name="action" value="close_session" class="btn btn-danger fw-bold shadow-sm">
                                 <i class="bi bi-x-octagon-fill me-2"></i> Close Session & Finalize Attendance
                             </button>
@@ -133,16 +159,20 @@
         </div>
 
         {% else %}
+        <!-- ===== NO ACTIVE SESSION: HISTORY & SCHEDULE VIEW ===== -->
+        <!-- Quick Start New Class Button -->
         <button class="btn btn-outline-primary text-start bg-white w-100 mb-3" data-bs-toggle="collapse" data-bs-target="#manualStart">
             <i class="bi bi-plus-circle me-2"></i> Start New Class
         </button>
 
+        <!-- Inline Form: Quick Class Startup with GPS Anchor -->
         <div id="manualStart" class="collapse mb-4">
             <div class="card shadow-sm border-0 rounded-4 bg-light">
                 <div class="card-body p-4">
+                    <!-- Quick Class Startup Form -->
                     <form action="{% url 'start_class' %}" method="POST" class="mx-auto text-start" style="max-width: 400px;" id="inlineStartClassForm">
                         {% csrf_token %}
-                        <h6 class="fw-bold text-muted mb-3">Initialize Lecture Anchor</h6>
+                        <h6 class="fw-bold text-muted mb-3">Initialize Lecture </h6>
                         <div class="mb-2">
                             <input type="text" name="subject" class="form-control p-2 input-soft" placeholder="Subject Name" required>
                         </div>
@@ -163,7 +193,7 @@
                         <input type="hidden" name="longitude" id="inline_lon_input">
 
                         <div id="inlineLocationStatus" class="alert alert-warning py-2 mb-3" style="display: none;">
-                            <small><i class="bi bi-hourglass-split"></i> Anchoring GPS...</small>
+                            <small><i class="bi bi-hourglass-split"></i> Fetching GPS...</small>
                         </div>
 
                         <button type="submit" class="btn btn-outline-primary text-center bg-white py-2 mt-2 mx-auto d-block" id="inlineStartBtn" onclick="submitInlineClass(event)">
@@ -174,12 +204,14 @@
             </div>
         </div>
 
-        <div class="card shadow-sm border-0 rounded-4">
+        <!-- ===== LECTURE HISTORY: PAST SESSIONS & ATTENDANCE STATS ===== -->
+        <div class="card shadow-sm border-0 rounded-4" id="lectureHistory">
             <div class="card-header bg-white border-bottom py-3 px-4">
                 <h5 class="fw-bold m-0 text-theme-green text-center">Lecture History</h5>
             </div>
 
             <div class="card-body p-0">
+                <!-- Past Sessions Table with Attendance Statistics -->
                 <div class="table-responsive">
                     <table class="table align-middle mb-0">
                         <thead class="bg-white text-dark border-bottom">
@@ -189,9 +221,12 @@
                                 <th class="text-end pe-4 py-3 border-0">Attendance Stats</th>
                             </tr>
                         </thead>
+                        <!-- Past Session Records -->
                         <tbody>
                             {% for session in past_sessions %}
+                            <!-- Session Row (Hidden rows show on "Show More") -->
                             <tr class="border-bottom {% if forloop.counter > 10 %}hidden-session d-none{% endif %}">
+                                <!-- Lecture Subject, Course, and Topic -->
                                 <td class="ps-4 py-3">
                                     <div class="fw-bold text-dark">{{ session.subject }}</div>
                                     <small class="text-muted">
@@ -201,10 +236,12 @@
                                         <i class="bi bi-journal-text me-1"></i> Topic: {{ session.topic|default:"N/A" }}
                                     </small>
                                 </td>
+                                <!-- Session Date and Time -->
                                 <td class="text-muted small py-3">
                                     <div class="fw-bold text-dark">{{ session.start_time|date:"d M Y" }}</div>
                                     <div>{{ session.start_time|time:"h:i A" }}</div>
                                 </td>
+                                <!-- Attendance Statistics: Present vs Not Present -->
                                 <td class="text-end pe-4 py-3">
                                     <span class="badge-status-present d-inline-block mb-1 shadow-sm">
                                         {{ session.present_count }} Present
@@ -216,6 +253,7 @@
                                 </td>
                             </tr>
                             {% empty %}
+                            <!-- No Past Lectures Message -->
                             <tr>
                                 <td colspan="3" class="text-center py-5">
                                     <div class="d-inline-block border rounded-3 p-3 mb-3 bg-light text-secondary">
@@ -229,6 +267,7 @@
                     </table>
                 </div>
                 
+                <!-- Pagination: Show More Button (appears if more than 10 sessions) -->
                 {% if has_more_sessions %}
                 <div class="text-center p-3 border-top">
                     <button class="btn btn-outline-primary rounded-3" id="showMoreBtn" onclick="showMoreSessions()">
@@ -242,6 +281,9 @@
     </div>
 </div>
 
+<!-- ===== BOOTSTRAP MODALS ===== -->
+
+<!-- MODAL 1: Allowed Students Master List -->
 <div class="modal fade" id="studentsModal" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-dialog-scrollable">
         <div class="modal-content border-0 shadow">
@@ -276,6 +318,7 @@
     </div>
 </div>
 
+<!-- MODAL 2: Start Class Modal with GPS Anchor Configuration -->
 <div class="modal fade" id="startClassModal" tabindex="-1">
     <div class="modal-dialog">
         <div class="modal-content border-0 shadow">
@@ -325,11 +368,173 @@
     </div>
 </div>
 
+<!-- MODAL 3: Generate PDF Reports -->
+<div class="modal fade" id="reportModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content border-0 shadow">
+            <div class="modal-header border-0" style="background-color: var(--primary-color);">
+                <h5 class="modal-title text-white fw-bold"><i class="bi bi-file-earmark-pdf me-2"></i>Generate Attendance Report</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            
+            <form action="{% url 'generate_report' %}" method="POST">
+                {% csrf_token %}
+                <div class="modal-body p-4">
+                    <!-- Subject Selection -->
+                    <div class="mb-3">
+                        <label class="form-label small fw-bold text-muted">Subject</label>
+                        {% if all_subjects %}
+                            <select name="subject" class="form-select" required>
+                                <option value="">-- Select Subject --</option>
+                                {% for subject in all_subjects %}
+                                    <option value="{{ subject }}">{{ subject }}</option>
+                                {% endfor %}
+                            </select>
+                        {% else %}
+                            <input type="text" name="subject" class="form-control" placeholder="Enter subject name (e.g., BCA)" required>
+                            <small class="text-muted">No previous subjects found. Enter a subject name manually.</small>
+                        {% endif %}
+                    </div>
+
+                    <!-- Report Type Selection -->
+                    <div class="mb-3">
+                        <label class="form-label small fw-bold text-muted">Report Type</label>
+                        <select name="report_type" class="form-select" required>
+                            <option value="">-- Select Report Type --</option>
+                            <option value="master">Master Attendance (All Students)</option>
+                            <option value="defaulters">Defaulters List (&lt;75% attendance)</option>
+                            <option value="audit">Security Audit (GPS/IP Details)</option>
+                        </select>
+                    </div>
+
+                    <!-- Start Date -->
+                    <div class="mb-3">
+                        <label class="form-label small fw-bold text-muted">Start Date</label>
+                        <input type="date" name="start_date" class="form-control" required>
+                    </div>
+
+                    <!-- End Date -->
+                    <div class="mb-3">
+                        <label class="form-label small fw-bold text-muted">End Date</label>
+                        <input type="date" name="end_date" class="form-control" required>
+                    </div>
+
+                    <div class="alert alert-info alert-dismissible fade show" role="alert">
+                        <small><i class="bi bi-info-circle me-2"></i>Reports are generated in PDF format and will be downloaded to your device.</small>
+                    </div>
+                </div>
+
+                <div class="modal-footer border-0 bg-light">
+                    <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="bi bi-download me-2"></i>Generate Report
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
 {% endblock %}
+
+<!-- ===== MODAL 1: ALLOWED STUDENTS MASTER LIST ===== -->
+<!-- Teacher-managed list of enrolled students eligible for attendance marking -->
+<!-- Used for manual verification and bulk operations if needed -->
+<!-- Format: Bootstrap modal with scrollable student table (enrolled students only) -->
+
+<!-- ===== MODAL 2: START CLASS WITH GPS ANCHOR ===== -->
+<!-- Initial class session setup with geolocation verification -->
+<!-- Captures: Course, Subject, Topic, and GPS coordinates (classroom anchor point) -->
+<!-- Security: GPS coordinates stored to validate student proximity during scan (50m geofence) -->
+<!-- Phase: Creates initial AttendanceSession, sets up Phase 1 (Check-In) QR codes -->
+
+<!-- ===== MODAL 3: GENERATE PDF REPORTS ===== -->
+<!-- Multi-type attendance report generation system -->
+<!-- Types:
+     1. Master Attendance: Complete monthly attendance per student
+     2. Defaulter List: Students below 75% attendance threshold
+     3. Security Audit: GPS/IP telemetry to prove anti-proxy security
+-->
+<!-- Date Range: User-selectable start and end dates for report period -->
+
+<!-- ===== MODAL 4: UPDATE STUDENT ATTENDANCE STATUS (ACTION BUTTON) ===== -->
+<!-- Manual attendance override for teacher corrections -->
+<!-- Allows changing: Pending → Present, Absent, or Incomplete -->
+<!-- Use case: Student couldn't scan but was present, or system error correction -->
+<div class="modal fade" id="studentActionModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0 shadow">
+            <div class="modal-header border-0" style="background-color: var(--primary-color);">
+                <h5 class="modal-title text-white fw-bold"><i class="bi bi-pencil-square me-2"></i>Update Attendance Status</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            
+            <div class="modal-body p-4">
+                <!-- Student Name (Read-Only Display) -->
+                <div class="mb-3">
+                    <label class="form-label small fw-bold text-muted">Student Name</label>
+                    <input type="text" id="studentName" class="form-control" readonly>
+                    <input type="hidden" id="attendanceId">
+                </div>
+
+                <!-- Status Selection -->
+                <div class="mb-4">
+                    <label class="form-label small fw-bold text-muted">Mark Status</label>
+                    <div class="d-grid gap-2">
+                        <div class="form-check">
+                            <input class="form-check-input" type="radio" name="attendanceStatus" id="statusPresent" value="present">
+                            <label class="form-check-label" for="statusPresent">
+                                <i class="bi bi-check-circle text-success me-2"></i><strong>Present</strong>
+                            </label>
+                        </div>
+                        <div class="form-check">
+                            <input class="form-check-input" type="radio" name="attendanceStatus" id="statusAbsent" value="absent">
+                            <label class="form-check-label" for="statusAbsent">
+                                <i class="bi bi-x-circle text-danger me-2"></i><strong>Absent</strong>
+                            </label>
+                        </div>
+                        <div class="form-check">
+                            <input class="form-check-input" type="radio" name="attendanceStatus" id="statusPending" value="pending">
+                            <label class="form-check-label" for="statusPending">
+                                <i class="bi bi-clock-history text-warning me-2"></i><strong>Pending</strong>
+                            </label>
+                        </div>
+                        <div class="form-check">
+                            <input class="form-check-input" type="radio" name="attendanceStatus" id="statusIncomplete" value="incomplete">
+                            <label class="form-check-label" for="statusIncomplete">
+                                <i class="bi bi-exclamation-triangle text-warning me-2"></i><strong>Incomplete</strong>
+                            </label>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Optional Notes -->
+                <div class="mb-3">
+                    <label class="form-label small fw-bold text-muted">Notes (Optional)</label>
+                    <textarea id="attendanceNotes" class="form-control" rows="2" placeholder="Reason for changing status..."></textarea>
+                </div>
+
+                <!-- Status Message -->
+                <div id="statusMessage" class="alert d-none" role="alert"></div>
+            </div>
+
+            <div class="modal-footer border-0 bg-light">
+                <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-primary btn-sm" onclick="saveAttendanceStatus()">
+                    <i class="bi bi-check2 me-1"></i>Save Changes
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
 
 {% block scripts %}
 <script>
-// Show more lecture history entries
+// ===== JAVASCRIPT ATTENDANCE MANAGEMENT FUNCTIONS =====
+
+// Helper: Show more lecture history entries
+// Reveals hidden rows in past sessions table via 'd-none' class toggle
+// Also hides the "Show More" button after expansion
 function showMoreSessions() {
     const hiddenRows = document.querySelectorAll('.hidden-session');
     hiddenRows.forEach(row => row.classList.remove('d-none'));
@@ -340,12 +545,24 @@ function showMoreSessions() {
     }
 }
 
-// Helper to prefill the subject if they clicked "Start" from the lecture table
+// Helper: Prefill subject dropdown when "Start" clicked from lecture history table
+// Called with subject name from table row data attribute
+// Updates modal subject input for quick class restart same course
 function prefillSubject(subjectName) {
     document.getElementById('modalSubjectInput').value = subjectName;
 }
 
-// Reusable Geolocation fetcher for both forms
+// Core GPS Handler: Reusable geolocation fetcher for both modal and inline forms
+// Validates form inputs, requests browser location permission, submits on success
+// Parameters:
+//   - event: Form submission event (prevented until GPS acquired)
+//   - formId: HTML form element ID to submit
+//   - btnId: Button ID to disable during location fetch
+//   - latId: Hidden input field ID for latitude storage
+//   - lonId: Hidden input field ID for longitude storage  
+//   - statusId: Status message div ID for user feedback
+// On Success: Injects GPS coordinates into hidden inputs and submits form
+// On Error: Shows user-friendly alert and re-enables form submission
 function fetchGPSAndSubmit(event, formId, btnId, latId, lonId, statusId) {
     event.preventDefault(); 
     
@@ -386,741 +603,376 @@ function fetchGPSAndSubmit(event, formId, btnId, latId, lonId, statusId) {
     }
 }
 
-<div class="modal fade" id="reportModal" tabindex="-1" aria-hidden="true">
-    <div class="modal-dialog">
-        <div class="modal-content border-0 shadow">
-            <div class="modal-header theme-green border-0">
-                <h5 class="modal-title text-white"><i class="bi bi-filetype-pdf"></i> Download Attendance Report (PDF)</h5>
-                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
-            </div>
-            
-            <form action="{% url 'generate_report' %}" method="POST">
-                {% csrf_token %}
-                <div class="modal-body p-4">
-                    
-                    <div class="mb-3">
-                        <label class="form-label small fw-bold text-muted">Select Subject</label>
-                        <select name="subject" class="form-control input-soft" required>
-                            <option value="" disabled selected>-- Choose a Subject --</option>
-                            {% for subject in all_subjects %}
-                                <option value="{{ subject }}">{{ subject }}</option>
-                            {% empty %}
-                                <option value="" disabled>No subjects available. Start a class first.</option>
-                            {% endfor %}
-                        </select>
-                    </div>
-
-                    <div class="mb-3">
-                        <label class="form-label small fw-bold text-muted">Report Type</label>
-                        <select name="report_type" class="form-control input-soft" required>
-                            <option value="master">1. Monthly Master Attendance (PDF)</option>
-                            <option value="defaulter">2. Defaulter List < 75% (PDF)</option>
-                            <option value="audit">3. Security & Telemetry Audit (PDF)</option>
-                        </select>
-                        <small class="text-muted mt-1 d-block" style="font-size: 0.75rem;">
-                            * The Audit report includes scanned IPs and GPS coordinates to prove anti-proxy measures.
-                        </small>
-                    </div>
-                    
-                    <div class="row">
-                        <div class="col-6 mb-3">
-                            <label class="form-label small fw-bold text-muted">Start Date</label>
-                            <input type="date" name="start_date" class="form-control input-soft" required>
-                        </div>
-                        <div class="col-6 mb-3">
-                            <label class="form-label small fw-bold text-muted">End Date</label>
-                            <input type="date" name="end_date" class="form-control input-soft" required>
-                        </div>
-                    </div>
-
-                </div>
-                <div class="modal-footer border-0 bg-light">
-                    <button type="button" class="btn btn-light rounded-pill px-4" data-bs-dismiss="modal">Cancel</button>
-                    <button type="submit" class="btn btn-theme-green rounded-pill px-4"><i class="bi bi-file-earmark-pdf me-1"></i> Download PDF</button>
-                </div>
-            </form>
-        </div>
-    </div>
-</div>
-
-
-// Attach to Modal Form
+// Wrapper: Modal form GPS submission
+// Connects "Start" button in #startClassModal to fetchGPSAndSubmit handler
+// Targets modal form fields: startClassForm, startBtn, lat_input, lon_input, locationStatus
 function submitModalClass(event) {
     fetchGPSAndSubmit(event, 'startClassForm', 'startBtn', 'lat_input', 'lon_input', 'locationStatus');
 }
 
-// Attach to Inline Form
+// Wrapper: Inline form GPS submission (no active session state)
+// Connects "Start" button in inline quick-start form to fetchGPSAndSubmit handler
+// Targets inline form fields: inlineStartClassForm, inlineStartBtn, inline_lat_input, inline_lon_input, inlineLocationStatus
+// Used when student is viewing history/schedule (no live session active)
 function submitInlineClass(event) {
     fetchGPSAndSubmit(event, 'inlineStartClassForm', 'inlineStartBtn', 'inline_lat_input', 'inline_lon_input', 'inlineLocationStatus');
 }
 </script>
 
+<!-- ===== DYNAMIC QR AUTO-REFRESH WITH 20-SECOND ROTATION =====-->
+<!-- Prevents QR sharing by rotating QR code every 20 seconds -->
+<!-- Each QR contains encrypted JWT token with unique nonce -->
+<!-- Displays countdown timer showing seconds until next refresh -->
+<!-- Auto-fetches new QR from /api/generate-dynamic-qr/ endpoint -->
+<!-- Used on: Live session QR display card during Phase 1 (Check-In) -->
+
 <script>
-// 15-Minute Live Timer Logic
-let timeLeft = {{ remaining_seconds|default:0 }};
-const timerDisplay = document.getElementById("timerDisplay");
+// Dynamic QR Refresh System
+// Rotates QR code every ~18 seconds to prevent students from sharing screenshots
+// Shows countdown timer (20 → 0 seconds) to indicate refresh frequency
+// Fetches new QR with encrypted JWT token from /api/generate-dynamic-qr/ endpoint
+// Each QR has unique nonce to prevent browser caching
 
-if (timerDisplay && timeLeft > 0) {
-    const countdown = setInterval(() => {
-        timeLeft--;
-        let minutes = Math.floor(timeLeft / 60);
-        let seconds = timeLeft % 60;
-        if (seconds < 10) seconds = "0" + seconds;
+let qrRefreshInterval = null;
+let countdownInterval = null;
+let timeRemainingDisplay = 20;
+let checkInDeadline = null;           // Store deadline timestamp
+let mainCountdownInterval = null;    // Separate countdown for 15-minute window
 
-        timerDisplay.innerHTML = `<i class="bi bi-clock"></i> Expires in ${minutes}:${seconds}`;
+function startDynamicQRRefresh() {
+    const timerDisplay = document.getElementById("timerDisplay");
+    const qrImage = document.querySelector('img[alt="Secure QR Code"]');
+    
+    if (!timerDisplay || !qrImage) return; // No active session
+    
+    // Fetch new QR immediately on load
+    fetchNewQRCode();
+    
+    // Refresh QR every 18 seconds (before 20-second expiry)
+    qrRefreshInterval = setInterval(fetchNewQRCode, 18000);
+}
 
-        if (timeLeft <= 0) {
-            clearInterval(countdown);
-            timerDisplay.innerHTML = `<span class="text-danger"><i class="bi bi-exclamation-circle"></i> Token Expired</span>`;
-            timerDisplay.classList.remove('text-muted');
+function startMainCountdown() {
+    const timerDisplay = document.getElementById("timerDisplay");
+    
+    if (!timerDisplay) return;
+    if (mainCountdownInterval) clearInterval(mainCountdownInterval);
+    
+    // Update countdown every second
+    mainCountdownInterval = setInterval(() => {
+        if (!checkInDeadline) {
+            // Deadline not set yet, try again on next interval
+            return;
+        }
+        
+        const now = new Date().getTime();
+        const deadline = new Date(checkInDeadline).getTime();
+        const timeRemaining = deadline - now;
+        
+        if (timeRemaining <= 0) {
+            // Time expired
+            timerDisplay.innerHTML = '<span class="text-danger fw-bold"><i class="bi bi-exclamation-triangle-fill"></i> Check-in Period Expired</span>';
+            timerDisplay.classList.add('text-danger');
+            timerDisplay.classList.remove('text-warning');
+            clearInterval(mainCountdownInterval);
+        } else {
+            // Calculate minutes and seconds
+            const totalSeconds = Math.floor(timeRemaining / 1000);
+            const minutes = Math.floor(totalSeconds / 60);
+            const seconds = totalSeconds % 60;
+            const displaySeconds = seconds < 10 ? '0' + seconds : seconds;
+            
+            // Update display
+            timerDisplay.innerHTML = `<i class="bi bi-clock"></i> Expires in ${minutes}:${displaySeconds}`;
+            timerDisplay.classList.remove('text-danger');
+            
+            // Warning color when < 2 minutes
+            if (minutes < 2) {
+                timerDisplay.classList.add('text-warning');
+            } else {
+                timerDisplay.classList.remove('text-warning');
+            }
         }
     }, 1000);
-} else if (timerDisplay && timeLeft <= 0) {
-    timerDisplay.innerHTML = `<span class="text-danger"><i class="bi bi-exclamation-circle"></i> Token Expired</span>`;
-}
-</script>
-{% endblock %}
-
-
-
-
-
-
-
-
-
-
-{% comment %} {% extends 'core/base.html' %}
-{% load static %}
-
-{% block content %}
-<div class="row">
-    
-    <div class="col-md-4 mb-4">
-        <div class="card text-white shadow-lg border-0 mb-4" style="background-color: var(--primary-color);">
-            <div class="card-body p-4">
-                <h2 class="fw-bold">Professor {{ teacher.last_name }}</h2>
-                <p class="mb-0 opacity-75">Faculty ID: {{ teacher.enrollment_number }}</p>
-                <p class="mb-0 opacity-75">Mail ID: {{ teacher.email }}</p>
-                
-                <hr class="bg-white opacity-25 my-3">
-                
-                <div class="d-flex justify-content-between text-center">
-                    <div>
-                        <h3 class="fw-bold mb-0">{{ lectures.count }}</h3>
-                        <small class="opacity-75">My Classes</small>
-                    </div>
-                    <div title="{{ registered_count }} Registered / {{ total_allowed }} Allowed">
-                        <h3 class="fw-bold mb-0">{{ registered_count }}</h3>
-                        <small class="opacity-75">Students Reg.</small>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <div class="card border-0 shadow-sm">
-            <div class="d-grid gap-2">
-                <a href="#" class="btn btn-outline-primary text-start">
-                    <i class="bi bi-file-earmark-pdf me-2"></i> Generate Reports
-                </a>
-    
-                <button type="button" class="btn btn-outline-secondary text-start" data-bs-toggle="modal" data-bs-target="#studentsModal">
-                    <i class="bi bi-people me-2"></i> View Allowed List
-                </button>
-            </div>
-        </div>
-    </div>
-
-    <div class="col-md-8">
-        
-        {% if active_session %}
-        <div class="card text-center shadow-sm mb-4 border-success">
-            <div class="card-header bg-success text-white">
-                <h5 class="mb-0"><i class="bi bi-broadcast"></i> Class in Progress: {{ active_session.subject }}</h5>
-            </div>
-            <div class="card-body">
-                <p class="text-muted">Course: {{ active_session.course_name }}</p>
-                
-                <img src="https://api.qrserver.com/v1/create-qr-code/?size=250x250&data={{ active_session.session_id }}" 
-                     alt="Attendance QR Code" 
-                     class="img-fluid border p-2 mb-3">
-                
-                <p><strong>Session ID:</strong> {{ active_session.session_id }}</p>
-                
-                <div class="alert alert-warning">
-                    Ask students to scan this QR code to mark attendance.
-                </div>
-
-                <a href="{% url 'end_class' %}" class="btn btn-danger btn-lg w-100">
-                    <i class="bi bi-stop-circle"></i> Stop Attendance & End Class
-                </a>
-            </div>
-        </div>
-
-        {% else %}
-        <div class="card shadow-sm border-0">
-            <div class="card-header bg-white border-0 py-3">
-                <h5 class="fw-bold m-0" style="color: var(--primary-color);">My Schedule / Lectures</h5>
-            </div>
-            <div class="card-body p-0">
-                <div class="table-responsive">
-                    <table class="table table-hover align-middle mb-0">
-                        <thead class="bg-light">
-                            <tr>
-                                <th class="ps-4">Lecture Name</th>
-                                <th>Created On</th>
-                                <th class="text-end pe-4">Action</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {% for lecture in lectures %}
-                            <tr>
-                                <td class="ps-4">
-                                    <div class="fw-bold">{{ lecture.name }}</div>
-                                    <small class="text-muted">CS-Dept</small>
-                                </td>
-                                <td class="text-muted small">
-                                    {{ lecture.created_at|date:"M d, Y" }}
-                                </td>
-                                <td class="text-end pe-4">
-                                    <form action="{% url 'start_class' %}" method="POST" class="d-inline">
-                                        {% csrf_token %}
-                                        <input type="hidden" name="subject" value="{{ lecture.name }}">
-                                        <input type="hidden" name="course" value="BCA Sem 5"> 
-                                        
-                                        <button type="submit" class="btn btn-sm btn-primary">
-                                            <i class="bi bi-play-circle me-1"></i> Start Class
-                                        </button>
-                                    </form>
-                                </td>
-                            </tr>
-                            {% empty %}
-                            <tr>
-                                <td colspan="3" class="text-center py-5 text-muted">
-                                    <i class="bi bi-calendar-x display-4"></i>
-                                    <p class="mt-2">No lectures assigned yet.</p>
-                                    <button class="btn btn-outline-primary btn-sm" data-bs-toggle="collapse" data-bs-target="#manualStart">
-                                        Start Custom Class
-                                    </button>
-                                    <div class="collapse mt-3" id="manualStart">
-                                        <form action="{% url 'start_class' %}" method="POST" class="d-inline-block w-50">
-                                            {% csrf_token %}
-                                            <input type="text" name="subject" class="form-control form-control-sm mb-2" placeholder="Subject Name" required>
-                                            <input type="text" name="course" class="form-control form-control-sm mb-2" placeholder="Course Name" required>
-                                            <button type="submit" class="btn btn-sm btn-success w-100">Start</button>
-                                        </form>
-                                    </div>
-                                </td>
-                            </tr>
-                            {% endfor %}
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-        </div>
-        {% endif %}
-    </div>
-
-</div>
-
-<div class="modal fade" id="studentsModal" tabindex="-1" aria-hidden="true">
-    <div class="modal-dialog modal-dialog-scrollable">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title fw-bold">Allowed Students (Master List)</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-            </div>
-            <div class="modal-body p-0">
-                <ul class="list-group list-group-flush">
-                    {% for student in allowed_students %}
-                        <li class="list-group-item d-flex justify-content-between align-items-center">
-                            <div>
-                                <span class="fw-bold">{{ student.enrollment_number }}</span>
-                                {% if student.email %}
-                                    <br><small class="text-muted">{{ student.email }}</small>
-                                {% endif %}
-                            </div>
-                            <span class="badge bg-light text-dark border">Allowed</span>
-                        </li>
-                    {% empty %}
-                        <li class="list-group-item text-center text-muted py-4">
-                            No students in Master List yet.
-                        </li>
-                    {% endfor %}
-                </ul>
-            </div>
-            <div class="modal-footer bg-light">
-                <small class="text-muted me-auto">Total: {{ total_allowed }}</small>
-                <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Close</button>
-            </div>
-        </div>
-    </div>
-</div>
-{% endblock %} 
-
-
-
-
-
-
-
-{% block content %}
-<style>
-    /* Custom Green Theme matching your design */
-    .theme-green { background-color: #1a9e6b !important; color: white; }
-    .text-theme-green { color: #1a9e6b !important; }
-    .btn-theme-green { background-color: #1a9e6b !important; color: white; border-color: #1a9e6b; }
-    .btn-theme-green:hover { background-color: #148055 !important; color: white; }
-    .btn-outline-theme { color: #1a9e6b; border-color: #1a9e6b; }
-    .btn-outline-theme:hover { background-color: #e8f5f0; color: #1a9e6b; }
-    .input-soft { background-color: #f8f9fa; border: 1px solid #dee2e6; border-radius: 8px; }
-</style>
-
-<div class="row">
-    
-    <!-- LEFT SIDEBAR: PROFILE & STATS -->
-    <div class="col-md-4 mb-4">
-        <!-- Profile Card styled like the image -->
-        <div class="card theme-green shadow-sm border-0 mb-4 rounded-4">
-            <div class="card-body p-4">
-                <h2 class="fw-bold mb-2">Professor {{ teacher.last_name }}</h2>
-                <p class="mb-0 opacity-75 small">Faculty ID: {{ teacher.enrollment_number }}</p>
-                <p class="mb-0 opacity-75 small">Mail ID: {{ teacher.email }}</p>
-                
-                <hr class="bg-white opacity-25 my-4">
-                
-                <div class="d-flex justify-content-between text-center px-2">
-                    <div>
-                        <h2 class="fw-bold mb-0">{{ lectures.count }}</h2>
-                        <small class="opacity-75">My Classes</small>
-                    </div>
-                    <div title="{{ registered_count }} Registered / {{ total_allowed }} Allowed">
-                        <h2 class="fw-bold mb-0">{{ registered_count }}</h2>
-                        <small class="opacity-75">Students Reg.</small>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <div class="d-grid gap-3">
-            <a href="#" class="btn btn-outline-theme text-start p-3 rounded-3 fw-medium bg-white">
-                <i class="bi bi-file-earmark-pdf me-2"></i> Generate Reports
-            </a>
-
-            <button type="button" class="btn btn-outline-secondary text-start p-3 rounded-3 fw-medium bg-white" data-bs-toggle="modal" data-bs-target="#studentsModal">
-                <i class="bi bi-people me-2"></i> View Allowed List
-            </button>
-        </div>
-    </div>
-
-    <!-- RIGHT SECTION: LIVE PROJECTOR OR SCHEDULE -->
-    <div class="col-md-8">
-        
-        {% if active_session %}
-        <!-- LIVE CLASS MONITOR (PROJECTOR VIEW) -->
-        <div class="card shadow-lg border-0 border-top border-success border-4 h-100 rounded-4">
-            <div class="card-body p-4 text-center">
-                <h4 class="fw-bold text-success mb-2">
-                    <span class="spinner-grow spinner-grow-sm text-danger me-2" role="status"></span> 
-                    Live Session: {{ active_session.subject }} {% if active_session.division %}(Div {{ active_session.division }}){% endif %}
-                </h4>
-                <p class="text-muted">
-                    Course: {{ active_session.course_name }} | 
-                    Topic: <strong>{{ active_session.topic|default:"N/A" }}</strong> | 
-                    Started at: {{ active_session.start_time|time:"H:i A" }}
-                </p>
-                
-                <!-- DISPLAY THE SECURE QR CODE -->
-                <div class="my-4 bg-light p-3 rounded-4 d-inline-block border shadow-sm">
-                    {% if active_session.qr_code %}
-                        <img src="{{ active_session.qr_code.url }}" alt="Secure QR Code" class="img-fluid mb-2 rounded" style="max-width: 250px;">
-                        {% if not active_session.is_checkout %}
-                            <h5 class="fw-bold text-primary mb-0">Phase 1: Check-In Scan</h5>
-                            <small class="text-muted fw-bold" id="timerDisplay">Expires in 15:00</small>
-                        {% else %}
-                            <h5 class="fw-bold text-danger mb-0">Phase 2: Check-Out Scan</h5>
-                            <small class="text-muted">Final verification before class ends</small>
-                        {% endif %}
-                    {% else %}
-                        <p class="text-danger">Error Generating QR Code.</p>
-                    {% endif %}
-                </div>
-
-                <hr>
-                
-                <!-- LIVE STUDENT TELEMETRY TABLE -->
-                <h5 class="text-start fw-bold mt-4"><i class="bi bi-people-fill me-2"></i>Live Check-Ins ({{ live_students|length }})</h5>
-                <div class="table-responsive text-start" style="max-height: 300px; overflow-y: auto;">
-                    <table class="table table-hover align-middle">
-                        <thead class="table-light sticky-top">
-                            <tr>
-                                <th>Roll No</th>
-                                <th>Name</th>
-                                <th>Time In</th>
-                                <th>Status</th>
-                                <th>Action</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {% for att in live_students %}
-                            <tr>
-                                <td>{{ att.student.roll_number }}</td>
-                                <td class="fw-bold">{{ att.student.first_name }} {{ att.student.last_name }}</td>
-                                <td>{{ att.time_in|time:"H:i A" }}</td>
-                                <td>
-                                    {% if att.status == 'incomplete' %}
-                                        <span class="badge bg-warning text-dark"><i class="bi bi-clock-history"></i> Incomplete (Pending Checkout)</span>
-                                    {% elif att.status == 'present' %}
-                                        <span class="badge bg-success"><i class="bi bi-check-circle"></i> Present</span>
-                                    {% endif %}
-                                </td>
-                                <td>
-                                    <button class="btn btn-sm btn-outline-secondary" title="Manual Override"><i class="bi bi-pencil-square"></i></button>
-                                </td>
-                            </tr>
-                            {% empty %}
-                            <tr>
-                                <td colspan="5" class="text-center text-muted py-4">No students have scanned yet. Waiting for telemetry...</td>
-                            </tr>
-                            {% endfor %}
-                        </tbody>
-                    </table>
-                </div>
-
-                <!-- DUAL-SCAN CONTROL BUTTONS -->
-                <div class="mt-4 pt-3 border-top">
-                    <form action="{% url 'end_class' %}" method="POST">
-                        {% csrf_token %}
-                        {% if not active_session.is_checkout %}
-                            <button type="submit" name="action" value="initiate_checkout" class="btn btn-warning px-4 py-2 fw-bold shadow-sm me-2 rounded-pill">
-                                <i class="bi bi-qr-code-scan me-2"></i> Generate Check-Out QR
-                            </button>
-                        {% else %}
-                            <button type="submit" name="action" value="close_session" class="btn btn-danger px-4 py-2 fw-bold shadow-sm rounded-pill">
-                                <i class="bi bi-x-octagon-fill me-2"></i> Close Session & Finalize Attendance
-                            </button>
-                        {% endif %}
-                    </form>
-                </div>
-            </div>
-        </div>
-
-        {% else %}
-        <!-- EMPTY STATE: SCHEDULE / LECTURES (Styled like the uploaded image) -->
-        <div class="card shadow-sm border-0 rounded-4">
-            <div class="card-header bg-white border-bottom py-3 px-4">
-                <h5 class="fw-bold m-0 text-theme-green">My Schedule / Lectures</h5>
-            </div>
-            <div class="card-body p-0">
-                <div class="table-responsive">
-                    <table class="table align-middle mb-0">
-                        <thead class="bg-white text-dark border-bottom">
-                            <tr>
-                                <th class="ps-4 py-3 border-0">Lecture Name</th>
-                                <th class="py-3 border-0">Created On</th>
-                                <th class="text-end pe-4 py-3 border-0">Action</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {% for lecture in lectures %}
-                            <tr class="border-bottom">
-                                <td class="ps-4 py-3">
-                                    <div class="fw-bold">{{ lecture.name }}</div>
-                                    <small class="text-muted">CS-Dept</small>
-                                </td>
-                                <td class="text-muted small py-3">
-                                    {{ lecture.created_at|date:"M d, Y" }}
-                                </td>
-                                <td class="text-end pe-4 py-3">
-                                    <button class="btn btn-sm btn-outline-theme rounded-pill px-3" data-bs-toggle="modal" data-bs-target="#startClassModal" onclick="prefillSubject('{{ lecture.name }}')">
-                                        Start Class
-                                    </button>
-                                </td>
-                            </tr>
-                            {% empty %}
-                            <tr>
-                                <td colspan="3" class="text-center py-5">
-                                    <div class="d-inline-block border rounded-3 p-3 mb-3 bg-light text-secondary">
-                                        <i class="bi bi-calendar-x display-4"></i>
-                                    </div>
-                                    <p class="text-muted mb-4">No lectures assigned yet.</p>
-                                    
-                                    <button class="btn btn-outline-theme rounded-pill px-4 fw-medium bg-white" data-bs-toggle="collapse" data-bs-target="#manualStart">
-                                        Start Custom Class
-                                    </button>
-                                    
-                                    <!-- Embedded Inline Form matching the image -->
-                                    <div class="collapse mt-4" id="manualStart">
-                                        <form action="{% url 'start_class' %}" method="POST" class="mx-auto text-start" style="max-width: 350px;" id="inlineStartClassForm">
-                                            {% csrf_token %}
-                                            <div class="mb-3">
-                                                <input type="text" name="subject" class="form-control p-2 input-soft" placeholder="Subject Name" required>
-                                            </div>
-                                            <div class="mb-3">
-                                                <input type="text" name="course" class="form-control p-2 input-soft" placeholder="Course Name" required>
-                                            </div>
-                                            
-                                            <!-- New fields added logically -->
-                                            <div class="row">
-                                                <div class="col-6 mb-3">
-                                                    <input type="text" name="division" class="form-control p-2 input-soft" placeholder="Division (e.g. A)">
-                                                </div>
-                                                <div class="col-6 mb-3">
-                                                    <input type="text" name="topic" class="form-control p-2 input-soft" placeholder="Topic">
-                                                </div>
-                                            </div>
-                                            
-                                            <!-- Hidden inputs to store the Teacher's GPS from inline form -->
-                                            <input type="hidden" name="latitude" id="inline_lat_input">
-                                            <input type="hidden" name="longitude" id="inline_lon_input">
-                                            
-                                            <div id="inlineLocationStatus" class="alert alert-warning py-2 mb-3" style="display: none;">
-                                                <small><i class="bi bi-hourglass-split"></i> Anchoring GPS...</small>
-                                            </div>
-
-                                            <button type="submit" class="btn btn-theme-green w-100 py-2 rounded-3 fw-bold" id="inlineStartBtn" onclick="submitInlineClass(event)">Start</button>
-                                        </form>
-                                    </div>
-                                </td>
-                            </tr>
-                            {% endfor %}
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-        </div>
-        {% endif %}
-    </div>
-</div>
-
-<!-- MASTER LIST MODAL -->
-<div class="modal fade" id="studentsModal" tabindex="-1" aria-hidden="true">
-    <div class="modal-dialog modal-dialog-scrollable">
-        <div class="modal-content border-0 shadow">
-            <div class="modal-header bg-light border-0">
-                <h5 class="modal-title fw-bold text-dark">Allowed Students (Master List)</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-            </div>
-            <div class="modal-body p-0">
-                <ul class="list-group list-group-flush">
-                    {% for student in allowed_students %}
-                        <li class="list-group-item d-flex justify-content-between align-items-center py-3">
-                            <div>
-                                <span class="fw-bold">{{ student.enrollment_number }}</span>
-                                {% if student.email %}
-                                    <br><small class="text-muted">{{ student.email }}</small>
-                                {% endif %}
-                            </div>
-                            <span class="badge bg-light text-dark border rounded-pill px-3">Allowed</span>
-                        </li>
-                    {% empty %}
-                        <li class="list-group-item text-center text-muted py-5">
-                            No students in Master List yet.
-                        </li>
-                    {% endfor %}
-                </ul>
-            </div>
-            <div class="modal-footer bg-light border-0">
-                <small class="text-muted me-auto">Total: {{ total_allowed }}</small>
-                <button type="button" class="btn btn-secondary btn-sm rounded-pill px-3" data-bs-dismiss="modal">Close</button>
-            </div>
-        </div>
-    </div>
-</div>
-
-<!-- START CLASS & GPS ANCHOR MODAL (For pre-assigned lectures) -->
-<div class="modal fade" id="startClassModal" tabindex="-1">
-    <div class="modal-dialog">
-        <div class="modal-content border-0 shadow">
-            <div class="modal-header theme-green border-0">
-                <h5 class="modal-title text-white"><i class="bi bi-geo-alt"></i> Initialize Lecture Anchor</h5>
-                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
-            </div>
-            
-            <form action="{% url 'start_class' %}" method="POST" id="startClassForm">
-                {% csrf_token %}
-                <div class="modal-body p-4">
-                    <p class="text-muted small mb-4">
-                        By starting this class, your current Wi-Fi IP and GPS location will be locked as the "Anchor" for students.
-                    </p>
-                    <div class="mb-3">
-                        <label class="form-label small fw-bold text-muted">Course Name</label>
-                        <input type="text" name="course" class="form-control input-soft" placeholder="e.g. BCA Sem 6" required>
-                    </div>
-                    <div class="row">
-                        <div class="col-md-6 mb-3">
-                            <label class="form-label small fw-bold text-muted">Division</label>
-                            <input type="text" name="division" class="form-control input-soft" placeholder="e.g. A" required>
-                        </div>
-                        <div class="col-md-6 mb-3">
-                            <label class="form-label small fw-bold text-muted">Subject</label>
-                            <input type="text" id="modalSubjectInput" name="subject" class="form-control input-soft" required>
-                        </div>
-                    </div>
-                    <div class="mb-3">
-                        <label class="form-label small fw-bold text-muted">Topic / Chapter</label>
-                        <input type="text" name="topic" class="form-control input-soft" placeholder="Current topic" required>
-                    </div>
-                    
-                    <!-- Hidden inputs to store the Teacher's GPS -->
-                    <input type="hidden" name="latitude" id="lat_input">
-                    <input type="hidden" name="longitude" id="lon_input">
-                    
-                    <div id="locationStatus" class="alert alert-warning py-2 mt-3" style="display: none;">
-                        <small><i class="bi bi-hourglass-split"></i> Fetching GPS coordinates...</small>
-                    </div>
-                </div>
-                <div class="modal-footer border-0 bg-light">
-                    <button type="button" class="btn btn-light rounded-pill px-4" data-bs-dismiss="modal">Cancel</button>
-                    <button type="submit" class="btn btn-theme-green rounded-pill px-4" id="startBtn" onclick="submitModalClass(event)">Generate QR</button>
-                </div>
-            </form>
-        </div>
-    </div>
-</div>
-
-{% endblock %}
-
-{% block scripts %}
-<script>
-// Helper to prefill the subject if they clicked "Start" from the lecture table
-function prefillSubject(subjectName) {
-    document.getElementById('modalSubjectInput').value = subjectName;
 }
 
-// Reusable Geolocation fetcher for both forms
-function fetchGPSAndSubmit(event, formId, btnId, latId, lonId, statusId) {
-    event.preventDefault(); 
+function fetchNewQRCode() {
+    const qrImage = document.querySelector('img[alt="Secure QR Code"]');
+    const timerDisplay = document.getElementById("timerDisplay");
     
-    const form = document.getElementById(formId);
-    if (!form.checkValidity()) {
-        form.reportValidity();
-        return;
-    }
-
-    const statusDiv = document.getElementById(statusId);
-    const startBtn = document.getElementById(btnId);
+    if (!qrImage || !timerDisplay) return;
     
-    statusDiv.style.display = "block";
-    startBtn.disabled = true; 
-    startBtn.innerHTML = "Locating...";
+    // Fetch new QR from API
+    fetch('/api/generate-dynamic-qr/')
+        .then(response => response.json())
+        .then(data => {
+            if (data.success && data.qr_image) {
+                // ✅ QR is valid - within 15-minute check-in window
+                qrImage.src = data.qr_image;
+                
+                // Store the deadline for main countdown
+                checkInDeadline = data.check_in_deadline;
+                
+                // Restart main countdown
+                startMainCountdown();
+            } else if (data.expired) {
+                // ❌ Check-in period expired (15+ minutes since class start)
+                clearInterval(qrRefreshInterval);  // Stop fetching new QR codes
+                clearInterval(mainCountdownInterval);  // Stop countdown
+                
+                // Show expiry message
+                if (timerDisplay) {
+                    timerDisplay.innerHTML = '<span class="text-danger fw-bold"><i class="bi bi-exclamation-triangle-fill"></i> Check-in Period Expired (15 mins)</span>';
+                    timerDisplay.classList.add('text-danger');
+                }
+                
+                // Optionally fade the QR image to indicate it's no longer functional
+                if (qrImage) {
+                    qrImage.style.opacity = '0.5';
+                    qrImage.style.filter = 'grayscale(100%)';
+                }
+            } else {
+                // Other API errors (no session, connection issues, etc)
+                if (timerDisplay) {
+                    timerDisplay.innerHTML = '<span class="text-danger"><i class="bi bi-exclamation-circle"></i> ' + (data.error || 'Error') + '</span>';
+                }
+            }
+        })
+        .catch(error => {
+            console.error('Error fetching dynamic QR:', error);
+            if (timerDisplay) {
+                timerDisplay.innerHTML = '<span class="text-danger"><i class="bi bi-exclamation-circle"></i> Connection Error</span>';
+            }
+        });
+}
 
-    if (navigator.geolocation) {
-        navigator.geolocation.getCurrentPosition(
-            function(position) {
-                // Success: Put GPS into hidden inputs
-                document.getElementById(latId).value = position.coords.latitude;
-                document.getElementById(lonId).value = position.coords.longitude;
-                form.submit(); 
-            },
-            function(error) {
-                alert("Location access is required to set the Class Anchor! Please allow location permissions in your browser.");
-                statusDiv.style.display = "none";
-                startBtn.disabled = false;
-                startBtn.innerHTML = "Start";
-            },
-            { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
-        );
+// Start dynamic QR refresh when page loads
+document.addEventListener('DOMContentLoaded', function() {
+    // Small delay to ensure DOM is fully ready
+    setTimeout(function() {
+        // Check if there's an active session with QR code
+        const qrImage = document.querySelector('img[alt="Secure QR Code"]');
+        const timerDisplay = document.getElementById("timerDisplay");
+        const isCheckInPhase = document.body.textContent.includes('Phase 1: Check-In');
+        
+        if (qrImage && timerDisplay && isCheckInPhase) {
+            console.log('Starting dynamic QR refresh...');
+            startDynamicQRRefresh();
+        }
+    }, 300);
+});
+
+// ===== STUDENT ACTION MODAL FUNCTIONS =====
+
+/**
+ * Opens the student action modal and populates it with student details
+ * Handles both modal opening and data population
+ */
+function openActionModal(attendanceId, studentName, currentStatus) {
+    console.log('openActionModal called:', {attendanceId, studentName, currentStatus});
+    
+    // Populate modal fields first
+    document.getElementById('attendanceId').value = attendanceId;
+    document.getElementById('studentName').value = studentName;
+    
+    // Clear previous selections
+    document.querySelectorAll('input[name="attendanceStatus"]').forEach(radio => {
+        radio.checked = false;
+    });
+    
+    // Clear notes and messages
+    document.getElementById('attendanceNotes').value = '';
+    hideStatusMessage();
+    
+    // Pre-select the current status in the radio buttons
+    const statusValue = (currentStatus || '').toLowerCase().trim();
+    console.log('Current status value:', statusValue);
+    
+    // Map status to radio button ID
+    const statusMap = {
+        'present': 'statusPresent',
+        'absent': 'statusAbsent',
+        'pending': 'statusPending',
+        'incomplete': 'statusIncomplete'
+    };
+    
+    const radioId = statusMap[statusValue];
+    if (radioId) {
+        const radio = document.getElementById(radioId);
+        if (radio) {
+            radio.checked = true;
+            console.log('✓ Set radio button checked:', radioId);
+        } else {
+            console.warn('✗ Radio button not found:', radioId);
+        }
     } else {
-        alert("Geolocation is not supported by your browser.");
-        statusDiv.style.display = "none";
-        startBtn.disabled = false;
-        startBtn.innerHTML = "Start";
+        console.warn('✗ Unknown status value:', statusValue);
+    }
+    
+    // Show the modal
+    const modalElement = document.getElementById('studentActionModal');
+    if (modalElement) {
+        const modal = new bootstrap.Modal(modalElement);
+        modal.show();
+        console.log('✓ Modal opened');
+    } else {
+        console.error('✗ Modal element not found');
     }
 }
 
-// Attach to Modal Form
-function submitModalClass(event) {
-    fetchGPSAndSubmit(event, 'startClassForm', 'startBtn', 'lat_input', 'lon_input', 'locationStatus');
-}
-
-// Attach to Inline Form
-function submitInlineClass(event) {
-    fetchGPSAndSubmit(event, 'inlineStartClassForm', 'inlineStartBtn', 'inline_lat_input', 'inline_lon_input', 'inlineLocationStatus');
-}
-</script>
-
-<script>
-// 15-Minute Live Timer Logic
-let timeLeft = {{ remaining_seconds|default:0 }};
-const timerDisplay = document.getElementById("timerDisplay");
-
-if (timerDisplay && timeLeft > 0) {
-    const countdown = setInterval(() => {
-        timeLeft--;
-        let minutes = Math.floor(timeLeft / 60);
-        let seconds = timeLeft % 60;
-        if (seconds < 10) seconds = "0" + seconds;
-
-        timerDisplay.innerHTML = `<i class="bi bi-clock"></i> Expires in ${minutes}:${seconds}`;
-
-        if (timeLeft <= 0) {
-            clearInterval(countdown);
-            timerDisplay.innerHTML = `<span class="text-danger"><i class="bi bi-exclamation-circle"></i> Token Expired</span>`;
-            timerDisplay.classList.remove('text-muted');
-        }
-    }, 1000);
-} else if (timerDisplay && timeLeft <= 0) {
-    timerDisplay.innerHTML = `<span class="text-danger"><i class="bi bi-exclamation-circle"></i> Token Expired</span>`;
-}
-
-// Student Action Modal Function
-let currentAttendanceId = null;
-
-function setStudentAction(attendanceId, studentName, currentStatus) {
-    currentAttendanceId = attendanceId;
-    document.getElementById('studentActionName').textContent = studentName;
-    document.getElementById('studentCurrentStatus').textContent = currentStatus.toUpperCase();
-}
-
-function updateStudentStatus(newStatus) {
-    if (currentAttendanceId === null) {
-        alert('Error: No student selected');
+/**
+ * Saves the attendance status change by sending AJAX request to backend
+ * Updates the attendance record in the database
+ */
+function saveAttendanceStatus() {
+    const attendanceId = document.getElementById('attendanceId').value;
+    const selectedStatus = document.querySelector('input[name="attendanceStatus"]:checked');
+    const notes = document.getElementById('attendanceNotes').value;
+    
+    console.log('saveAttendanceStatus called:', {attendanceId, selectedStatus: selectedStatus?.value, notes});
+    
+    // Validation: Check if status is selected
+    if (!selectedStatus) {
+        showStatusMessage('Please select a status', 'warning');
         return;
     }
     
-    // In a real application, you would send an AJAX request to update the status
-    // For now, we'll show a confirmation message
-    const studentName = document.getElementById('studentActionName').textContent;
-    alert(`Marked ${studentName} as ${newStatus}`);
+    const newStatus = selectedStatus.value;
     
-    // Close the modal
-    const modal = bootstrap.Modal.getInstance(document.getElementById('studentActionModal'));
-    modal.hide();
+    // Validation: Check if attendance ID is set
+    if (!attendanceId) {
+        showStatusMessage('Error: Attendance ID not found', 'danger');
+        return;
+    }
+    
+    // Prepare request data
+    const requestData = {
+        attendance_id: parseInt(attendanceId),
+        status: newStatus,
+        notes: notes
+    };
+    
+    console.log('Request data:', requestData);
+    
+    // Show loading state
+    const saveBtn = document.querySelector('#studentActionModal .btn-primary');
+    const originalText = saveBtn ? saveBtn.innerHTML : '';
+    if (saveBtn) {
+        saveBtn.disabled = true;
+        saveBtn.innerHTML = '<i class="bi bi-hourglass-split me-1"></i>Saving...';
+    }
+    
+    // Get CSRF token - try multiple sources
+    let token = '';
+    const csrfTokenElement = document.querySelector('[name=csrfmiddlewaretoken]');
+    if (csrfTokenElement) {
+        token = csrfTokenElement.value;
+        console.log('Found CSRF token from form');
+    } else {
+        // Try to get from cookie
+        const cookies = document.cookie.split(';');
+        for (let cookie of cookies) {
+            if (cookie.trim().startsWith('csrftoken=')) {
+                token = cookie.trim().substring('csrftoken='.length);
+                console.log('Found CSRF token from cookie');
+                break;
+            }
+        }
+    }
+    
+    if (!token) {
+        console.warn('CSRF token not found - request may fail');
+    }
+    
+    console.log('CSRF Token present:', token ? 'Yes' : 'No');
+    
+    // Send AJAX request to backend API
+    const fetchOptions = {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(requestData)
+    };
+    
+    // Add CSRF token to header if found
+    if (token) {
+        fetchOptions.headers['X-CSRFToken'] = token;
+    }
+    
+    console.log('Fetch options:', fetchOptions);
+    
+    fetch('/api/update-attendance/', fetchOptions)
+    .then(response => {
+        console.log('Response status:', response.status);
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        return response.json();
+    })
+    .then(data => {
+        console.log('API Response:', data);
+        if (data.success) {
+            // Success: Show success message and reload dashboard
+            showStatusMessage(`✓ Attendance updated: ${data.old_status.toUpperCase()} → ${data.new_status.toUpperCase()}`, 'success');
+            
+            // Reload page after 1.5 seconds to show updated attendance
+            setTimeout(() => {
+                location.reload();
+            }, 1500);
+        } else {
+            // Error: Show error message
+            showStatusMessage(`Error: ${data.error}`, 'danger');
+            if (saveBtn) {
+                saveBtn.disabled = false;
+                saveBtn.innerHTML = originalText;
+            }
+        }
+    })
+    .catch(error => {
+        console.error('Error updating attendance:', error);
+        showStatusMessage(`Connection error: ${error.message}`, 'danger');
+        if (saveBtn) {
+            saveBtn.disabled = false;
+            saveBtn.innerHTML = originalText;
+        }
+    });
+}
+
+/**
+ * Helper: Show status message in the modal
+ */
+function showStatusMessage(message, type = 'info') {
+    const messageEl = document.getElementById('statusMessage');
+    if (!messageEl) {
+        console.error('Status message element not found');
+        return;
+    }
+    messageEl.className = `alert alert-${type}`;
+    messageEl.textContent = message;
+    messageEl.classList.remove('d-none');
+    console.log('Status message shown:', message, type);
+}
+
+/**
+ * Helper: Hide status message in the modal
+ */
+function hideStatusMessage() {
+    const messageEl = document.getElementById('statusMessage');
+    if (messageEl) {
+        messageEl.classList.add('d-none');
+    }
 }
 </script>
+{% endblock %}
 
-<!-- Student Action Modal -->
-<div class="modal fade" id="studentActionModal" tabindex="-1" aria-hidden="true">
-    <div class="modal-dialog modal-dialog-centered">
-        <div class="modal-content border-0 shadow">
-            <div class="modal-header bg-light border-0">
-                <h5 class="modal-title"><i class="bi bi-pencil-square me-2"></i>Update Attendance Status</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-            </div>
-            <div class="modal-body p-4">
-                <div class="mb-3">
-                    <label class="form-label small fw-bold text-muted">Student Name</label>
-                    <p class="fw-bold mb-0" id="studentActionName">-</p>
-                </div>
-                <div class="mb-3">
-                    <label class="form-label small fw-bold text-muted">Current Status</label>
-                    <p class="fw-bold mb-0" id="studentCurrentStatus">-</p>
-                </div>
-            </div>
-            <div class="modal-footer border-0 bg-light">
-                <button type="button" class="btn btn-danger rounded-pill" onclick="updateStudentStatus('absent')">
-                    <i class="bi bi-x-circle me-1"></i>Mark as Absent
-                </button>
-                <button type="button" class="btn btn-success rounded-pill" onclick="updateStudentStatus('present')">
-                    <i class="bi bi-check-circle me-1"></i>Mark as Present
-                </button>
-            </div>
-        </div>
-    </div>
-</div>
 
-{% endblock %}  {% endblock %} {% endcomment %} --- IGNORE ---
+
+
+
+
+
+
 
 
 

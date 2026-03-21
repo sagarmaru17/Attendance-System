@@ -1,20 +1,6 @@
 {% extends 'core/base.html' %}
 {% load static %}
 
-{# ============================================================
-   LOGIN PAGE
-   ============================================================
-   
-   User authentication page for both Teachers and Students.
-   Form accepts:
-   - username: Teacher/Student enrollment number or username
-   - password: Account password
-   
-   Links:
-   - Forgot password: Reset account password via verification
-   - Create Account: Sign up as new student
-#}
-
 {% block content %}
 <div class="row justify-content-center align-items-center" style="height: 80vh;">
     <div class="col-md-5 col-lg-4">
@@ -24,7 +10,7 @@
                 
                 <div class="text-center mb-4">
                     <h1 class="text-primary fw-bold d-flex align-items-center justify-content-center">
-                        <img src="{% static 'images/beqr-trans.png' %}" alt="BeQr Logo" style="height: 50px; margin-right: 5px;">
+                        <img src="{% static 'images/beqr-trans-black.png' %}" alt="BeQr Logo" style="height: 50px; margin-right: 5px;">
                     </h1>
                     <p class="text-muted">Login to Your Account</p>
                 </div>
@@ -48,7 +34,7 @@
 
                 </form>
                 <div class="text-center mt-4 d-flex justify-content-between px-2">
-                    <a href="{% url 'forgot_password' %}" class="small text-warning text-decoration-none">Forgot password?</a>
+                    <a href="{% url 'forgot_password' %}" class="small text-secondary text-decoration-none">Forgot password?</a>
                     <a href="{% url 'signup' %}" class="small fw-bold text-primary text-decoration-none">Create Account</a>
                 </div>
 

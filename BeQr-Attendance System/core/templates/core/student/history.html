@@ -1,0 +1,321 @@
+{% extends 'core/base.html' %}
+{% load static %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-10 col-lg-8">
+        
+        <!-- Header -->
+        <div class="mb-4">
+            <h2 class="fw-bold mb-2">Attendance History</h2>
+            <p class="text-muted">Complete record of all your attendance (organized by month)</p>
+        </div>
+
+        <!-- ===== FILTER & SORT CONTROLS ===== -->
+        <div class="card shadow-sm border-0 rounded-4 mb-4 p-3" style="background-color: #f8f9fa;">
+            <div class="row g-2">
+                <!-- Filter by Status -->
+                <div class="col-md-6">
+                    <label class="form-label small fw-bold text-muted">Filter by Status</label>
+                    <div class="btn-group w-100" role="group">
+                        <button type="button" class="btn btn-sm btn-outline-primary active" onclick="filterByStatus('all')" id="btn-all">
+                            <i class="bi bi-filter me-1"></i>All
+                        </button>
+                        <button type="button" class="btn btn-sm btn-outline-success" onclick="filterByStatus('present')" id="btn-present">
+                            <i class="bi bi-check-circle me-1"></i>Present
+                        </button>
+                        <button type="button" class="btn btn-sm btn-outline-danger" onclick="filterByStatus('absent')" id="btn-absent">
+                            <i class="bi bi-x-circle me-1"></i>Absent
+                        </button>
+                        <button type="button" class="btn btn-sm btn-outline-warning" onclick="filterByStatus('incomplete')" id="btn-incomplete">
+                            <i class="bi bi-hourglass me-1"></i>Incomplete
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Sort Options -->
+                <div class="col-md-6">
+                    <label class="form-label small fw-bold text-muted">Sort by Date</label>
+                    <div class="btn-group w-100" role="group">
+                        <button type="button" class="btn btn-sm btn-outline-primary active" onclick="sortByDate('newest')" id="btn-newest">
+                            <i class="bi bi-sort-down me-1"></i>Newest First
+                        </button>
+                        <button type="button" class="btn btn-sm btn-outline-primary" onclick="sortByDate('oldest')" id="btn-oldest">
+                            <i class="bi bi-sort-up me-1"></i>Oldest First
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Date Range Filter -->
+                <div class="col-12">
+                    <label class="form-label small fw-bold text-muted"><i class="bi bi-calendar-range me-1"></i>Filter by Date Range</label>
+                    <div class="row g-2">
+                        <div class="col-sm-5">
+                            <div class="input-group input-group-sm">
+                                <span class="input-group-text bg-white border-primary"><i class="bi bi-calendar-event"></i></span>
+                                <input type="date" class="form-control border-primary" id="startDate" placeholder="From" onchange="filterByDateRange()">
+                            </div>
+                            <small class="text-muted d-block">From Date</small>
+                        </div>
+                        <div class="col-sm-5">
+                            <div class="input-group input-group-sm">
+                                <span class="input-group-text bg-white border-primary"><i class="bi bi-calendar-event"></i></span>
+                                <input type="date" class="form-control border-primary" id="endDate" placeholder="To" onchange="filterByDateRange()">
+                            </div>
+                            <small class="text-muted d-block">To Date</small>
+                        </div>
+                        <div class="col-sm-2">
+                            <button type="button" class="btn btn-sm btn-outline-secondary w-100" onclick="clearDateFilter()" title="Clear date filter">
+                                <i class="bi bi-x-circle"></i> Clear
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Attendance Records Grouped by Month & Day -->
+        <div class="card shadow-sm border-0 rounded-4">
+            <div class="card-body p-0">
+                {% for month_year, days_list in grouped_attendance %}
+                    <!-- ===== MONTH HEADER ===== -->
+                    <div class="bg-light border-bottom p-3 fw-bold text-dark month-group" style="background-color: #f8f9fa;">
+                        <i class="bi bi-calendar-range me-2"></i>{{ month_year }}
+                    </div>
+
+                    <!-- ===== DAYS IN THIS MONTH ===== -->
+                    <div class="list-group list-group-flush">
+                        {% for day_date, records in days_list %}
+                            <!-- Day Subheader -->
+                            <div class="p-3 border-bottom day-group" style="background-color: #ffffff; border-left: 4px solid var(--primary-color);">
+                                <h6 class="mb-0 fw-bold text-dark">
+                                    <i class="bi bi-calendar-event me-2"></i>{{ day_date }}
+                                </h6>
+                            </div>
+
+                            <!-- Records for this day -->
+                            {% for record in records %}
+                                <div class="p-4 border-bottom list-group-item attendance-record" data-status="{{ record.status }}" data-date="{{ record.time_in|date:'Y-m-d' }}">
+                                    <div class="d-flex w-100 justify-content-between align-items-start">
+                                        <!-- Subject & Time -->
+                                        <div class="flex-grow-1">
+                                            <h6 class="mb-2 fw-bold text-dark">{{ record.session.subject }}</h6>
+                                            <small class="text-muted d-block mb-1">
+                                                <i class="bi bi-clock me-2"></i>{{ record.time_in|date:"h:i A" }}
+                                            </small>
+                                            {% if record.session.topic %}
+                                                <small class="text-muted d-block">
+                                                    <i class="bi bi-chat-left-text me-2"></i>{{ record.session.topic }}
+                                                </small>
+                                            {% endif %}
+                                        </div>
+
+                                        <!-- Status Badge -->
+                                        <div class="ms-3">
+                                            {% if record.status == 'present' %}
+                                                <span class="badge-status-present shadow-sm" style="font-size: 0.85rem;">
+                                                    <i class="bi bi-check-circle"></i> Present
+                                                </span>
+                                            {% elif record.status == 'incomplete' %}
+                                                <span class="badge bg-warning text-dark shadow-sm" style="font-size: 0.85rem;">
+                                                    <i class="bi bi-hourglass"></i> Incomplete
+                                                </span>
+                                            {% else %}
+                                                <span class="badge-status-absent shadow-sm" style="font-size: 0.85rem;">
+                                                    <i class="bi bi-x-circle"></i> Absent
+                                                </span>
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                </div>
+                            {% endfor %}
+                        {% endfor %}
+                    </div>
+                {% empty %}
+                    <!-- No Records Message -->
+                    <div class="text-center py-5 text-muted">
+                        <i class="bi bi-inbox display-4 mb-2"></i>
+                        <p>No attendance records found yet.</p>
+                    </div>
+                {% endfor %}
+            </div>
+        </div>
+
+        <!-- Back to Dashboard -->
+        <div class="mt-4 text-center">
+            <a href="{% url 'student_dashboard' %}" class="btn btn-outline-primary btn-sm">
+                <i class="bi bi-arrow-left me-2"></i>Back to Dashboard
+            </a>
+        </div>
+
+    </div>
+</div>
+
+<!-- ===== FILTER & SORT JAVASCRIPT ===== -->
+<script>
+let currentFilter = 'all';
+let currentSort = 'newest';
+let startDateFilter = null;
+let endDateFilter = null;
+
+/**
+ * Filter attendance records by status
+ * Hides/shows records and groups based on selected filter
+ */
+function filterByStatus(status) {
+    currentFilter = status;
+    
+    // Update button states
+    document.getElementById('btn-all').classList.toggle('active', status === 'all');
+    document.getElementById('btn-present').classList.toggle('active', status === 'present');
+    document.getElementById('btn-absent').classList.toggle('active', status === 'absent');
+    document.getElementById('btn-incomplete').classList.toggle('active', status === 'incomplete');
+    
+    applyFiltersAndSort();
+}
+
+/**
+ * Sort attendance records by date
+ */
+function sortByDate(direction) {
+    currentSort = direction;
+    
+    // Update button states
+    document.getElementById('btn-newest').classList.toggle('active', direction === 'newest');
+    document.getElementById('btn-oldest').classList.toggle('active', direction === 'oldest');
+    
+    applyFiltersAndSort();
+}
+
+/**
+ * Filter records by date range
+ * Applies filters based on start and end date inputs
+ */
+function filterByDateRange() {
+    const startInput = document.getElementById('startDate').value;
+    const endInput = document.getElementById('endDate').value;
+
+    // Parse dates (format: YYYY-MM-DD)
+    startDateFilter = startInput ? new Date(startInput + 'T00:00:00') : null;
+    endDateFilter = endInput ? new Date(endInput + 'T23:59:59') : null;
+
+    // Validate date range
+    if (startDateFilter && endDateFilter && startDateFilter > endDateFilter) {
+        alert('Start date cannot be after end date');
+        document.getElementById('endDate').value = '';
+        endDateFilter = null;
+        return;
+    }
+
+    applyFiltersAndSort();
+}
+
+/**
+ * Clear date range filter
+ * Resets both date inputs and re-applies filters
+ */
+function clearDateFilter() {
+    document.getElementById('startDate').value = '';
+    document.getElementById('endDate').value = '';
+    startDateFilter = null;
+    endDateFilter = null;
+    applyFiltersAndSort();
+}
+
+/**
+ * Check if a record date is within the filtered date range
+ * @param {string} recordDate - Date string in YYYY-MM-DD format
+ * @returns {boolean} True if record is within date range (or no filter applied)
+ */
+function isWithinDateRange(recordDate) {
+    // If no date filter is set, include all records
+    if (!startDateFilter && !endDateFilter) {
+        return true;
+    }
+
+    const recordDateObj = new Date(recordDate + 'T00:00:00');
+
+    // Check if record is within the date range
+    if (startDateFilter && recordDateObj < startDateFilter) {
+        return false;
+    }
+    if (endDateFilter && recordDateObj > endDateFilter) {
+        return false;
+    }
+
+    return true;
+}
+
+/**
+ * Apply both filter and sort to the attendance records
+ */
+function applyFiltersAndSort() {
+    const records = document.querySelectorAll('.attendance-record');
+    const monthGroups = document.querySelectorAll('.month-group');
+    const dayGroups = document.querySelectorAll('.day-group');
+    
+    // First, filter records by status and date range
+    let visibleCount = 0;
+    records.forEach(record => {
+        const status = record.getAttribute('data-status');
+        const recordDate = record.getAttribute('data-date');
+        
+        // Check both status filter and date range filter
+        const statusMatch = currentFilter === 'all' || status === currentFilter;
+        const dateMatch = isWithinDateRange(recordDate);
+        const shouldShow = statusMatch && dateMatch;
+        
+        record.style.display = shouldShow ? 'block' : 'none';
+        if (shouldShow) visibleCount++;
+    });
+    
+    // Hide/show day and month groups based on visible children
+    dayGroups.forEach(dayGroup => {
+        const dayContainer = dayGroup.nextElementSibling;
+        if (!dayContainer) return;
+        
+        const visibleInDay = dayContainer.querySelectorAll('.attendance-record:not([style*="display: none"])').length;
+        dayGroup.style.display = visibleInDay > 0 ? 'block' : 'none';
+        dayContainer.style.display = visibleInDay > 0 ? 'block' : 'none';
+    });
+    
+    monthGroups.forEach(monthGroup => {
+        const monthContainer = monthGroup.nextElementSibling;
+        if (!monthContainer) return;
+        
+        const visibleInMonth = monthContainer.querySelectorAll('.attendance-record:not([style*="display: none"])').length;
+        monthGroup.style.display = visibleInMonth > 0 ? 'block' : 'none';
+        monthContainer.style.display = visibleInMonth > 0 ? 'block' : 'none';
+    });
+    
+    // Sort records if oldestFirst
+    if (currentSort === 'oldest') {
+        const recordsArray = Array.from(records);
+        recordsArray.sort((a, b) => {
+            const dateA = new Date(a.getAttribute('data-date'));
+            const dateB = new Date(b.getAttribute('data-date'));
+            return dateA - dateB;  // Oldest first
+        });
+        
+        // Re-order in DOM (simple approach - hide/show with order)
+        // Note: This is a visual sort, the HTML structure remains the same
+        recordsArray.forEach((record, index) => {
+            record.style.order = index;
+        });
+    }
+    
+    // Show no records message if all are hidden
+    const allHidden = visibleCount === 0;
+    const noRecordsMsg = document.querySelector('.text-center.py-5');
+    if (noRecordsMsg) {
+        noRecordsMsg.style.display = allHidden ? 'block' : 'none';
+    }
+}
+
+// Initialize on page load
+document.addEventListener('DOMContentLoaded', function() {
+    applyFiltersAndSort();
+});
+</script>
+
+{% endblock %}

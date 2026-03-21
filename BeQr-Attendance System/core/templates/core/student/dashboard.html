@@ -1,97 +1,6 @@
 {% extends 'core/base.html' %}
 {% load static %}
 
-{# ============================================================
-   STUDENT DASHBOARD
-   ============================================================
-   
-   Main student interface for QR-based attendance scanning.
-   
-   KEY COMPONENTS:
-   
-   1. STUDENT PROFILE CARD (Top section)
-      - Displays: Name, Roll Number, Enrollment Number, Email
-      - Primary color themed (green background)
-      - Shows student enrollment details
-   
-   2. RECENT ACTIVITY SECTION
-      - Lists last 5 attendance records
-      - Shows: Subject, Date/Time, Status badge
-      - Status badges: Green=Present, Yellow=Incomplete, Red=Absent
-      - Empty state message if no records exist
-   
-   3. QR SCANNER (Floating Action Button - FAB)
-      - Green circular button at bottom right
-      - Opens #scannerModal when clicked
-      - Triggers camera access for QR code scanning
-   
-   4. SCANNER MODAL (#scannerModal)
-      - Full-screen camera feed for QR detection
-      - Uses html5-qrcode library (JavaScript library)
-      - Auto-starts camera on modal open
-      - Auto-stops camera on modal close (battery saving)
-      - Processing overlay shows during QR processing
-      - Detects QR codes in real-time
-   
-   5. CONFIRMATION MODAL (#confirmationModal)
-      - Shows lecture details after QR scan
-      - Displays:
-        * Scan Type: "Starting Lecture" (green) or "Ending Lecture" (red)
-        * Lecture Subject (large header)
-        * Faculty Name and Topic (info cards)
-        * Date & Time (with calendar icon)
-      - Verification message asking user to confirm details
-      - Cancel or Confirm & Submit buttons
-   
-   6. HIDDEN FORM (#scanSubmitForm)
-      - Submits to /student/process_scan/
-      - Contains: qr_token, latitude, longitude, csrf_token
-      - Submitted automatically after user confirms attendance
-   
-   SECURITY ARCHITECTURE:
-   
-   Layer 1: Time & Cryptography
-   - JWT token with 15-minute expiry for check-in
-   - JWT token with 10-minute expiry for check-out
-   - Token signature validation using Django SECRET_KEY
-   
-   Layer 2: Geofencing
-   - GPS coordinates validated against teacher's location
-   - 50-meter radius radius allowed
-   - Prevents attendance from outside classroom
-   
-   Layer 3: Network Validation
-   - Student IP must be on same subnet as teacher (/24 CIDR)
-   - Ensures student is on college WiFi
-   
-   Layer 4: Device Fingerprinting
-   - Unique device ID stored in secure httponly cookie
-   - Prevents same device used by multiple students in same session
-   - Lasts for 1 year
-   
-   ATTENDANCE STATUSES:
-   - pending: Initial state when attendance created
-   - incomplete: Student checked in but not checked out
-   - present: Student completed both check-in and check-out
-   - absent: Student never scanned (auto-marked after session ends)
-   
-   WORKFLOW:
-   1. Student clicks FAB button → #scannerModal opens
-   2. Camera auto-starts, student points at QR code
-   3. onScanSuccess() triggered → QR code decoded
-   4. JWT token extracted → session_id and scan_type obtained
-   5. /api/session/{sessionId}/?type={scanType} API call made
-   6. Response populates #confirmationModal with lecture details
-   7. Scan type banner updated (Starting/Ending Lecture indicator)
-   8. Student reads details and clicks "Confirm & Submit"
-   9. GPS location requested (browser geolocation API)
-   10. Coordinates added to hidden form
-   11. Form auto-submitted to /student/process_scan/
-   12. Server validates all 4 security layers
-   13. If all pass: Attendance record updated, redirect to dashboard
-   14. If any fail: Error message shown, scanner resumes
-#}
-
 {% comment %} {% block content %}
 <div class="row justify-content-center">
     <div class="col-md-6 col-lg-5">
@@ -179,9 +88,10 @@
 {% load static %} {% endcomment %}
 
 {% block content %}
-<div class="row justify-content-center">
-    <div class="col-md-8 col-lg-6">
-        
+<div class="row">
+    <!-- Left Column: Profile & Recent Activity -->
+    <div class="col-md-4 mb-4">
+        <!-- Profile Card -->
         <div class="card shadow-sm border-0 mb-4 rounded-4" style="background-color: var(--primary-color);">
             <div class="card-body p-4 text-white">
                 <div class="d-flex align-items-start">
@@ -198,7 +108,8 @@
             </div>
         </div>
 
-        <div class="card shadow-sm border-0 rounded-4 mb-5">
+        <!-- Recent Activity -->
+        <div class="card shadow-sm border-0 rounded-4 mb-4">
             <div class="card-header bg-white border-bottom py-3 px-4">
                 <h5 class="fw-bold m-0" style="color: var(--primary-color);"><i class="bi bi-clock-history me-2"></i>Recent Activity</h5>
             </div>
@@ -231,13 +142,130 @@
                 </div>
             </div>
         </div>
+    </div>
 
+    <!-- Right Column: QR Scanner & Attendance Statistics -->
+    <div class="col-md-8 mb-4">
+        <!-- QR Scanner Button -->
+        <div class="d-grid gap-2 mb-4">
+            <button class="btn btn-primary btn-lg rounded-3 shadow-sm" data-bs-toggle="modal" data-bs-target="#scannerModal" id="fabScanBtn">
+                <i class="bi bi-qr-code-scan me-2"></i>Open QR Scanner
+            </button>
+        </div>
+
+        <!-- Daily Attendance Statistics -->
+        <div class="card shadow-sm border-0 rounded-4 mb-4">
+            <div class="card-header bg-white border-bottom py-3 px-4">
+                <h5 class="fw-bold m-0" style="color: var(--primary-color);"><i class="bi bi-calendar-day me-2"></i>Daily Statistics - {% now "l, F d, Y" %}</h5>
+            </div>
+            <div class="card-body p-4">
+                <div class="row g-3 mb-4">
+                    <div class="col-6">
+                        <div class="card border-0 shadow-sm rounded text-center" style="background-color: #e7f5ff;">
+                            <div class="card-body py-3">
+                                <h6 class="fw-bold text-primary mb-0">{{ daily_total }}</h6>
+                                <small class="text-muted">Today</small>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-6">
+                        <div class="card border-0 shadow-sm rounded text-center" style="background-color: #e6ffed;">
+                            <div class="card-body py-3">
+                                <h6 class="fw-bold text-success mb-0">{{ daily_present }}</h6>
+                                <small class="text-muted">Present</small>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-6">
+                        <div class="card border-0 shadow-sm rounded text-center" style="background-color: #ffe7e7;">
+                            <div class="card-body py-3">
+                                <h6 class="fw-bold text-danger mb-0">{{ daily_absent }}</h6>
+                                <small class="text-muted">Absent</small>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-6">
+                        <div class="card border-0 shadow-sm rounded text-center" style="background-color: #fff4e6;">
+                            <div class="card-body py-3">
+                                <h6 class="fw-bold text-warning mb-0">{{ daily_incomplete }}</h6>
+                                <small class="text-muted">Incomplete</small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Daily Attendance Percentage -->
+                <div>
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <label class="small fw-bold text-muted">Daily Rate</label>
+                        <span class="fw-bold text-primary">{{ daily_percentage }}%</span>
+                    </div>
+                    <div class="progress" style="height: 25px; border-radius: 10px;">
+                        <div class="progress-bar bg-success" role="progressbar" style="width: {{ daily_percentage }}%;" aria-valuenow="{{ daily_percentage }}" aria-valuemin="0" aria-valuemax="100">
+                            <small class="text-white fw-bold">{{ daily_percentage }}%</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Monthly Attendance Statistics -->
+        <div class="card shadow-sm border-0 rounded-4 mb-4">
+            <div class="card-header bg-white border-bottom py-3 px-4">
+                <h5 class="fw-bold m-0" style="color: var(--primary-color);"><i class="bi bi-calendar-month me-2"></i>Monthly Statistics - {% now "F Y" %}</h5>
+            </div>
+            <div class="card-body p-4">
+                <div class="row g-3 mb-4">
+                    <div class="col-6">
+                        <div class="card border-0 shadow-sm rounded text-center" style="background-color: #e7f5ff;">
+                            <div class="card-body py-3">
+                                <h6 class="fw-bold text-primary mb-0">{{ monthly_total }}</h6>
+                                <small class="text-muted">This Month</small>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-6">
+                        <div class="card border-0 shadow-sm rounded text-center" style="background-color: #e6ffed;">
+                            <div class="card-body py-3">
+                                <h6 class="fw-bold text-success mb-0">{{ monthly_present }}</h6>
+                                <small class="text-muted">Present</small>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-6">
+                        <div class="card border-0 shadow-sm rounded text-center" style="background-color: #ffe7e7;">
+                            <div class="card-body py-3">
+                                <h6 class="fw-bold text-danger mb-0">{{ monthly_absent }}</h6>
+                                <small class="text-muted">Absent</small>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-6">
+                        <div class="card border-0 shadow-sm rounded text-center" style="background-color: #fff4e6;">
+                            <div class="card-body py-3">
+                                <h6 class="fw-bold text-warning mb-0">{{ monthly_incomplete }}</h6>
+                                <small class="text-muted">Incomplete</small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Monthly Attendance Percentage -->
+                <div>
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <label class="small fw-bold text-muted">Monthly Rate</label>
+                        <span class="fw-bold text-primary">{{ monthly_percentage }}%</span>
+                    </div>
+                    <div class="progress" style="height: 25px; border-radius: 10px;">
+                        <div class="progress-bar bg-success" role="progressbar" style="width: {{ monthly_percentage }}%;" aria-valuenow="{{ monthly_percentage }}" aria-valuemin="0" aria-valuemax="100">
+                            <small class="text-white fw-bold">{{ monthly_percentage }}%</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
     </div>
 </div>
-
-<button class="btn-scan-fab" data-bs-toggle="modal" data-bs-target="#scannerModal" id="fabScanBtn">
-    <i class="bi bi-qr-code-scan"></i>
-</button>
 
 <!-- Scanner Modal -->
 <div class="modal fade" id="scannerModal" tabindex="-1" aria-hidden="true" data-bs-backdrop="static">

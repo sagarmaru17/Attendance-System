@@ -1,0 +1,67 @@
+{% extends 'core/base.html' %}
+{% load static %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-8 col-lg-6">
+        
+        <!-- Profile Card -->
+        <div class="card shadow-sm border-0 mb-4 rounded-4" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
+            <div class="card-body p-5 text-white">
+                <div class="d-flex align-items-start mb-4">
+                    <div class="rounded-circle p-3 me-3" style="background-color: rgba(255,255,255,0.2);">
+                        <i class="bi bi-person-fill display-4 mb-0"></i>
+                    </div>
+                    <div class="flex-grow-1">
+                        <h2 class="fw-bold mb-2">{{ student.first_name }} {{ student.last_name }}</h2>
+                        <p class="opacity-75 mb-0">Student Account</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Personal Information -->
+        <div class="card shadow-sm border-0 rounded-4 mb-4">
+            <div class="card-header bg-white border-bottom py-3 px-4">
+                <h5 class="fw-bold m-0 text-primary"><i class="bi bi-info-circle me-2"></i>Personal Information</h5>
+            </div>
+            <div class="card-body p-4">
+                <div class="row g-3">
+                    <div class="col-md-6">
+                        <label class="form-label small fw-bold text-muted">First Name</label>
+                        <p class="fw-bold text-dark">{{ student.first_name }}</p>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label small fw-bold text-muted">Last Name</label>
+                        <p class="fw-bold text-dark">{{ student.last_name }}</p>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label small fw-bold text-muted">Email</label>
+                        <p class="fw-bold text-dark">{{ student.email }}</p>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label small fw-bold text-muted">Username</label>
+                        <p class="fw-bold text-dark">{{ student.username }}</p>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label small fw-bold text-muted">Roll Number</label>
+                        <p class="fw-bold text-dark">{{ student.roll_number|default:"N/A" }}</p>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label small fw-bold text-muted">Enrollment Number</label>
+                        <p class="fw-bold text-dark">{{ student.enrollment_number }}</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Back to Dashboard -->
+        <div class="text-center mb-4">
+            <a href="{% url 'student_dashboard' %}" class="btn btn-outline-primary btn-sm">
+                <i class="bi bi-arrow-left me-2"></i>Back to Dashboard
+            </a>
+        </div>
+
+    </div>
+</div>
+{% endblock %}

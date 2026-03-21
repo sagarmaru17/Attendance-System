@@ -1,3 +1,21 @@
+# ============================================================
+# PROJECT CONFIGURATION FILE - beqr/settings.py
+# ============================================================
+#
+# Django project settings for BeQr Attendance System.
+# This file contains all project-wide configuration including:
+# - Database connection settings
+# - Installed apps and middleware
+# - Static and media file handling
+# - Security settings
+# - Authentication configuration
+#
+# ⚠️  IMPORTANT FOR PRODUCTION:
+# - Change SECRET_KEY to a secure random string
+# - Set DEBUG = False
+# - Set ALLOWED_HOSTS to specific domain names
+# - Move database credentials to environment variables
+
 """
 Django settings for beqr project.
 
@@ -12,133 +30,226 @@ https://docs.djangoproject.com/en/5.2/ref/settings/
 
 from pathlib import Path
 
+# ============================================================
+# 1. BASE DIRECTORY CONFIGURATION
+# ============================================================
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
-BASE_DIR = Path(__file__).resolve().parent.parent # Absolute path to the project directory 
+BASE_DIR = Path(__file__).resolve().parent.parent # Absolute path to the project directory: /Users/SagarMaru/Desktop/Attendance-System/BeQr-Attendance System
 
 
-# Quick-start development settings - unsuitable for production
+# ============================================================
+# 2. SECURITY SETTINGS (Quick-start development settings)
+# ============================================================
 # See https://docs.djangoproject.com/en/5.2/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
+# Used for cryptographic signing (sessions, CSRF tokens, etc.)
+# In production: move to environment variable and use a secure random key
 SECRET_KEY = 'django-insecure-x!y8%r^fz55&2%alfyi_%y@gzivgdvebi@n^qzter8-v@m++6@'
 
 # SECURITY WARNING: don't run with debug turned on in production!
+# DEBUG = True: Shows detailed error pages with sensitive information
+# DEBUG = False: Shows generic error pages (required for production)
 DEBUG = True
 
+# List of hosts/domains where the app can run
+# '*' allows all hosts (development only!)
+# In production: set to specific domain names ['example.com', 'www.example.com']
 ALLOWED_HOSTS = ['*']
 
 
-# Application definition
+# When DEBUG=False, Django will only allow requests from hosts in this list.
+# In development, we can allow all hosts with ALLOWED_HOSTS = ['*'], but in production, you should specify your domain(s) here.
+# For example, if your site is hosted at 'www.beqr.com', you would set:
+# ALLOWED_HOSTS = ['www.beqr.com', 'beqr.com']
+CSRF_TRUSTED_ORIGINS = [
+    'https://*.ngrok-free.dev',
+    'https://*.ngrok-free.app'
+]
+
+
+# ============================================================
+# 3. APPLICATION CONFIGURATION
+# ============================================================
 
 INSTALLED_APPS = [
-    'django.contrib.admin',
-    'django.contrib.auth',
-    'django.contrib.contenttypes',
-    'django.contrib.sessions',
-    'django.contrib.messages',
-    'django.contrib.staticfiles',
-    'core',
+    # Django core apps
+    'django.contrib.admin',          # /admin/
+    'django.contrib.auth',           # User authentication system
+    'django.contrib.contenttypes',   # Content type framework
+    'django.contrib.sessions',       # Session management
+    'django.contrib.messages',       # Messaging framework
+    'django.contrib.staticfiles',    # Static file management
+    
+    # Project apps
+    'core',                          # Our custom BeQr app (models, views, etc.)
 ]
 
+# Middleware: processes requests/responses in order (top to bottom for request, reverse for response)
 MIDDLEWARE = [
-    'django.middleware.security.SecurityMiddleware',
-    'django.contrib.sessions.middleware.SessionMiddleware',
-    'django.middleware.common.CommonMiddleware',
-    'django.middleware.csrf.CsrfViewMiddleware',
-    'django.contrib.auth.middleware.AuthenticationMiddleware',
-    'django.contrib.messages.middleware.MessageMiddleware',
-    'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    'django.middleware.security.SecurityMiddleware',        # Security enhancements (HTTPS redirect, etc.)
+    'django.contrib.sessions.middleware.SessionMiddleware', # Session support
+    'django.middleware.common.CommonMiddleware',            # Common utilities (APPEND_SLASH, etc.)
+    'django.middleware.csrf.CsrfViewMiddleware',            # Cross-Site Request Forgery protection
+    'django.contrib.auth.middleware.AuthenticationMiddleware', # User authentication support
+    'django.contrib.messages.middleware.MessageMiddleware',    # Messaging framework support
+    'django.middleware.clickjacking.XFrameOptionsMiddleware',  # Clickjacking protection
 ]
 
+# Root URL configuration (where Django looks for URL patterns)
 ROOT_URLCONF = 'beqr.urls'
 
-
+# Use custom user model instead of default Django User
+# CustomUser extends the default User to add extra fields like roll_number
 AUTH_USER_MODEL = 'core.CustomUser'
+
+
+# ============================================================
+# 4. TEMPLATE CONFIGURATION
+# ============================================================
 
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [],
-        'APP_DIRS': True,
+        
+        # Directories to look for templates (in addition to app-specific template folders)
+        'DIRS': [],  # Currently empty; templates are in core/templates/
+        
+        'APP_DIRS': True,  # Look for templates in <app>/templates/ directories
+        
         'OPTIONS': {
+            # Built-in template variables available in every template
             'context_processors': [
-                'django.template.context_processors.request',
-                'django.contrib.auth.context_processors.auth',
-                'django.contrib.messages.context_processors.messages',
+                'django.template.context_processors.request',     # 'request' variable
+                'django.contrib.auth.context_processors.auth',    # 'user' and 'perms' variables
+                'django.contrib.messages.context_processors.messages', # 'messages' variable
             ],
         },
     },
 ]
 
+# Web Server Gateway Interface application (used by production servers)
 WSGI_APPLICATION = 'beqr.wsgi.application'
 
 
-# Database
+# ============================================================
+# 5. DATABASE CONFIGURATION
+# ============================================================
 # https://docs.djangoproject.com/en/5.2/ref/settings/#databases
 
 import os
 
-# Use SQLite for local development when DEBUG=True to avoid requiring a
-# local MySQL server and credentials. In production (DEBUG=False) the
-# existing MySQL configuration is used.
-
-
+# MySQL database credentials (replace with environment variables in production)
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.mysql',
-        'NAME': 'beqr_db',      # The name you just created in Workbench
-        'USER': 'bqr',         # Default MySQL user
-        'PASSWORD': '123',         # LEAVE EMPTY if you didn't set one. 
-                                # If you typed a password to open Workbench, put that here!
-        'HOST': '127.0.0.1',    # Localhost
-        'PORT': '3306',         # Default port
+        'ENGINE': 'django.db.backends.mysql',  # Use MySQL database
+        
+        'NAME': 'beqr_db',      # Database name (must exist in MySQL)
+                               # Create with: CREATE DATABASE beqr_db;
+                               
+        'USER': 'bqr',         # MySQL username
+                              # Create with: CREATE USER 'bqr'@'127.0.0.1' IDENTIFIED BY '123';
+                              
+        'PASSWORD': '123',     # MySQL password
+                              # Set during user creation
+                              
+        'HOST': '127.0.0.1',   # Database server address (localhost)
+        
+        'PORT': '3306',        # MySQL default port
+        
+        # GRANT PERMISSIONS:
+        # GRANT ALL PRIVILEGES ON beqr_db.* TO 'bqr'@'127.0.0.1';
+        # FLUSH PRIVILEGES;
     }
 }
 
 # Password validation
 # https://docs.djangoproject.com/en/5.2/ref/settings/#auth-password-validators
 
+
+# ============================================================
+# 6. PASSWORD VALIDATION
+# ============================================================
+# https://docs.djangoproject.com/en/5.2/ref/settings/#auth-password-validators
+
 AUTH_PASSWORD_VALIDATORS = [
+    # Check password isn't similar to user attributes (username, email, etc.)
     {
         'NAME': 'django.contrib.auth.password_validation.UserAttributeSimilarityValidator',
     },
+    
+    # Check password meets minimum length (default: 8 characters)
     {
         'NAME': 'django.contrib.auth.password_validation.MinimumLengthValidator',
     },
+    
+    # Check password isn't in list of common passwords
     {
         'NAME': 'django.contrib.auth.password_validation.CommonPasswordValidator',
     },
+    
+    # Check password doesn't consist entirely of numeric characters
     {
         'NAME': 'django.contrib.auth.password_validation.NumericPasswordValidator',
     },
 ]
 
 
-# Internationalization
+# ============================================================
+# 7. INTERNATIONALIZATION (i18n)
+# ============================================================
 # https://docs.djangoproject.com/en/5.2/topics/i18n/
 
+# Language for the interface (English)
 LANGUAGE_CODE = 'en-us'
 
+# Timezone for storing/displaying dates (India Standard Time)
 TIME_ZONE = 'Asia/Kolkata'
 
+# Enable internationalization (multi-language support)
 USE_I18N = True
 
+# Use timezone-aware datetime objects
 USE_TZ = True
 
 
-# Static files (CSS, JavaScript, Images)
+# ============================================================
+# 8. STATIC FILES (CSS, JavaScript, Images)
+# ============================================================
 # https://docs.djangoproject.com/en/5.2/howto/static-files/
 
+# URL path to static files in development
+# Access static file like: /static/css/style.css
 STATIC_URL = 'static/'
+
+# Directory (-ies) containing static files to serve
+# When accessing http://localhost:8000/static/css/style.css
+# Django looks in: BASE_DIR/static/css/style.css
 STATICFILES_DIRS = [
-    BASE_DIR / "static",
+    BASE_DIR / "static",  # Project-wide static files
 ]
 
+# In production: Run `python manage.py collectstatic` to collect all static files here
+STATIC_ROOT = BASE_DIR / 'staticfiles'  # (Currently commented out - uncomment for production)
+
+# ============================================================
+# 9. MEDIA FILES (User-Uploaded Content)
+# ============================================================
+
+# URL path to access uploaded media (QR codes, etc.)
+# Access uploaded QR like: /media/qr_codes/123abc.png
 MEDIA_URL = '/media/'
+
+# Directory where uploaded files are stored
+# QR codes saved to: BASE_DIR/media/qr_codes/
 MEDIA_ROOT = BASE_DIR / 'media'
 
 
-# Default primary key field type
+# ============================================================
+# 10. DATABASE & ORM SETTINGS
+# ============================================================
 # https://docs.djangoproject.com/en/5.2/ref/settings/#default-auto-field
 
+# Default primary key field type for models (64-bit integer)
+# Auto-incremented ID field: id = models.BigAutoField(primary_key=True)
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
