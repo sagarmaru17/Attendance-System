@@ -8,11 +8,8 @@
 
 ## 🎓 Academic Submission Details
 
-**Project Type:** BCA Final Year Project  
-**Student:** Sagar Maru  
-**Enrollment:** 230431163  
-**Guided by:** Prof. Bhavin Mehta  
-**Submitted to:** Faculty of Computer Science, Noble University, Junagadh  
+**Project Type:**  Final Year Project  
+**Student:** Sagar Maru   
 **Development Date:** March 2026  
 
 ---
