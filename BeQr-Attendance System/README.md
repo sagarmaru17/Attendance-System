@@ -1,4 +1,4 @@
-# 📱 BeQr - QR Code-Based Smart Attendance Management System
+#  BeQr - QR Code-Based Smart Attendance Management System
 
 <div align="center">
 
@@ -6,7 +6,7 @@
 
 ---
 
-## 🎓 Academic Submission Details
+##  Academic Submission Details
 
 **Project Type:**  Final Year Project  
 **Student:** Sagar Maru   
@@ -16,7 +16,7 @@
 
 </div>
 
-## 📖 Executive Summary
+##  Executive Summary
 
 Traditional digital attendance systems (static QR codes, time-based systems) are highly vulnerable to:
 - **Proxy Attendance:** Someone else scans for the student
@@ -28,7 +28,7 @@ Traditional digital attendance systems (static QR codes, time-based systems) are
 
 ---
 
-## 🛡️ The Unique Selling Proposition (USP)
+##  The Unique Selling Proposition (USP)
 
 ### Three-Layer Security Architecture:
 
@@ -92,49 +92,49 @@ Timeline of a Class Session:
 
 ---
 
-## 🚀 Key Features
+##  Key Features
 
-### 🎓 **For Students**
+###  **For Students**
 
-✅ **Mobile-First QR Scanner**
+ **Mobile-First QR Scanner**
 - Responsive web interface works on all devices
 - Real-time camera access via browser HTML5 API
 - No app installation required
 - Clean, minimalist UI optimized for speed
 
-✅ **Dual-Scan Integrity**
+ **Dual-Scan Integrity**
 - Required to scan at **both** start and end of lecture
 - Prevents mid-class bunking (cannot just check-in and leave)
 - Clear visual feedback for each scan phase
 
-✅ **Live Attendance History**
+ **Live Attendance History**
 - Real-time attendance dashboard
 - Track attendance percentage per subject
 - Visual indicators for missing classes
 - Date-wise attendance breakdown
 - Identifies subjects below 75% (defaulter alert)
 
-✅ **Security Validation Display**
+ **Security Validation Display**
 - Shows GPS coordinates during scan
 - Displays IP address and subnet validation
 - Shows device fingerprint confirmation
 - Builds trust through transparency
 
-### 👨‍🏫 **For Teachers**
+###  **For Teachers**
 
-✅ **Command Center Dashboard**
+ **Command Center Dashboard**
 - Live session overview with real-time student check-ins
 - Visual countdown timer (15-minute check-in window)
 - Current QR code display with auto-refresh every 20 seconds
 - List of students who have checked in
 
-✅ **Session Management**
+ **Session Management**
 - One-click "Start New Class" (captures GPS + IP automatically)
 - Toggle to "Initiate Checkout" phase
 - "End Class Now" to finalize and auto-mark absent students
 - Quick session navigation between multiple concurrent classes
 
-✅ **Advanced Reporting System**
+ **Advanced Reporting System**
 - **3 Report Types:**
   1. **Master Attendance Report** - Complete attendance for all students, dates, and statuses
   2. **Defaulters List** - Students with <75% attendance (at-risk alert)
@@ -147,14 +147,14 @@ Timeline of a Class Session:
   - Attendance percentage calculations
   - Color-coded status (Present=Green, Absent=Red)
 
-✅ **Lecture Management**
+ **Lecture Management**
 - Create and manage courses/subjects
 - Link lectures to teacher account
 - Historical subject tracking
 
 ---
 
-## 🗄️ Database Architecture
+##  Database Architecture
 
 ### **5 Core Tables:**
 
@@ -277,7 +277,7 @@ pending ──[student scans check-in]──> incomplete
 
 ---
 
-## 🏗️ Technical Architecture
+##  Technical Architecture
 
 ### **Technology Stack**
 
@@ -312,7 +312,7 @@ pending ──[student scans check-in]──> incomplete
 
 ---
 
-## 🔄 Core Workflows
+##  Core Workflows
 
 ### **Workflow 1: Student Registration**
 
@@ -542,7 +542,7 @@ pending ──[student scans check-in]──> incomplete
 
 ---
 
-## 🛠️ Installation & Setup
+##  Installation & Setup
 
 ### **Prerequisites**
 - Python 3.13+
@@ -624,7 +624,7 @@ Copy ngrok URL and update `CSRF_TRUSTED_ORIGINS` in settings.py
 
 ---
 
-## 📊 Database Schema Visualization
+##  Database Schema Visualization
 
 ```
 CustomUser (Users)
@@ -673,7 +673,7 @@ AllowedStudent (Whitelist)
 
 ---
 
-## 🔐 Security Implementation Details
+##  Security Implementation Details
 
 ### **1. Authentication**
 - Django's PBKDF2 password hashing (industry standard)
@@ -744,7 +744,7 @@ response.set_cookie(
 
 ---
 
-## 📈 Performance & Scalability
+##  Performance & Scalability
 
 ### **Optimizations Implemented**
 
@@ -770,7 +770,7 @@ response.set_cookie(
 
 ---
 
-## 🐛 Troubleshooting
+##  Troubleshooting
 
 ### **Q: "No active session" error**
 **A:** Teacher must click "Start New Class" first. Session doesn't exist until created.
@@ -798,7 +798,7 @@ response.set_cookie(
 
 ---
 
-## 📝 Project Metrics
+##  Project Metrics
 
 | Metric | Value |
 |--------|-------|
@@ -816,34 +816,34 @@ response.set_cookie(
 
 ---
 
-## 🎓 Academic Significance
+##  Academic Significance
 
 This project demonstrates:
 
-✅ **Full-Stack Web Development**
+ **Full-Stack Web Development**
 - Backend: Django ORM, views, forms, authentication
 - Frontend: HTML5, CSS3, JavaScript (ES6+)
 - Database: Relational schema design
 
-✅ **Advanced Security Concepts**
+ **Advanced Security Concepts**
 - JWT encryption & time-bound tokens
 - Geofencing with GPS (Haversine formula)
 - Network security (IP subnet validation)
 - Device fingerprinting (anti-fraud)
 
-✅ **Software Engineering Best Practices**
+ **Software Engineering Best Practices**
 - MVC architecture (Models, Views, Controllers)
 - DRY principle (Don't Repeat Yourself)
 - Code documentation & comments
 - Version control (Git)
 
-✅ **Database Design**
+ **Database Design**
 - Relational schema with foreign keys
 - Unique constraints & integrity
 - Efficient indexing strategy
 - Complex queries & aggregations
 
-✅ **Real-World Problem Solving**
+ **Real-World Problem Solving**
 - Identified actual security loopholes
 - Designed innovative solutions
 - Implemented & tested thoroughly
@@ -851,7 +851,7 @@ This project demonstrates:
 
 ---
 
-## 📚 References & Technologies
+##  References & Technologies
 
 - Django Documentation: https://docs.djangoproject.com/
 - PyJWT: https://pyjwt.readthedocs.io/
@@ -861,13 +861,13 @@ This project demonstrates:
 
 ---
 
-## 📄 License
+##  License
 
 This project is submitted as academic work and is provided "as-is" for educational purposes.
 
 ---
 
-## ✉️ Contact & Support
+##  Contact & Support
 
 **Student:** Sagar Maru  
 **Repository:** https://github.com/sagarmaru17/Attendance-System  
@@ -877,13 +877,13 @@ For questions or feature requests, please open an issue on GitHub.
 ---
 
 **Last Updated:** March 22, 2026  
-**Status:** ✅ Complete (Academic Submission)
+**Status:**  Complete (Academic Submission)
 
 Dynamic Generation: One-click generation of the cryptographic QR matrix.
 
 Manual Override: When students facing hardware issues.
 
-👨‍💻 For Administrators
+ For Administrators
 
 Master List Validation: Strict sign-up firewall. Only students pre-approved in the University Master List can create accounts.
 
@@ -939,7 +939,7 @@ HTML5, Bootstrap 5
 
 Responsive, mobile-ready user interface.
 
-⚙️ Local Installation Guide
+ Local Installation Guide
 
 Follow these steps to set up the BeQr project locally on your machine (macOS/Windows/Linux).
 
@@ -998,7 +998,7 @@ python manage.py runserver
 
 Visit http://127.0.0.1:8000/ in your browser.
 
-🚦 Usage Workflow
+ Usage Workflow
 
 Initial Setup: Log in to the Django Admin panel (/admin). Add valid Enrollment Numbers to the Allowed Students table. Create Faculty users (Faculty IDs are auto-generated).
 
@@ -1008,7 +1008,7 @@ Running a Class: The Teacher logs in, clicks "Start Class", and displays the gen
 
 Marking Attendance: Students log in, scan the QR code via their phone, pass the background validation (IP + Location + Device), and are marked present.
 
-📂 Project Structure
+ Project Structure
 
 BeQr-Attendance System/
 ├── beqr/               # Django Settings & Root URL Configurations
@@ -1023,12 +1023,12 @@ BeQr-Attendance System/
 └── manage.py           # Django execution script
 
 
-👨‍💻 Author
+ Author
 
 Sagar Maru
 Linkedin : https://www.linkedin.com/in/sagar-maru-b987b9294/
 
 
-📝 License
+ License
 
 This project was developed for educational purposes as part of a  academic submission.
