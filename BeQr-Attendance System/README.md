@@ -870,7 +870,6 @@ This project is submitted as academic work and is provided "as-is" for education
 ## ✉️ Contact & Support
 
 **Student:** Sagar Maru  
-**Enrollment:** 230431163  
 **Repository:** https://github.com/sagarmaru17/Attendance-System  
 
 For questions or feature requests, please open an issue on GitHub.
@@ -1032,4 +1031,4 @@ Linkedin : https://www.linkedin.com/in/sagar-maru-b987b9294/
 
 📝 License
 
-This project was developed for educational purposes as part of a BCA academic submission.
+This project was developed for educational purposes as part of a  academic submission.

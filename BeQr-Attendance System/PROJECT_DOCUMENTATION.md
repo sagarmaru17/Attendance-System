@@ -20,16 +20,6 @@
 
 ## Project Overview
 
-### Academic Details
-- **Project Type:** BCA Final Year Project
-- **Student:** Sagar Maru
-- **Enrollment:** 230431163
-- **Guide:** Prof. Bhavin Mehta
-- **Institution:** Faculty of Computer Science, Noble University, Junagadh
-- **Development Period:** December 2025 - March 2026
-- **Language:** Python (Django), JavaScript, HTML/CSS
-- **Total Development Time:** ~200+ hours
-
 ### Project Title
 **"BeQr - A QR Code-Based Smart Attendance Management System with Multi-Layer Security Validation"**
 
@@ -1016,5 +1006,4 @@ This project demonstrates proficiency in:
 
 **Project Completion Status:** ✅ Complete  
 **Submission Date:** March 22, 2026  
-**Student:** Sagar Maru (230431163)  
-**Institution:** Noble University, Junagadh
+**Student:** Sagar Maru 
