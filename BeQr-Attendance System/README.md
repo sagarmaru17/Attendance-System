@@ -6,11 +6,6 @@
 
 ---
 
-##  Academic Submission Details
-
-**Project Type:**  Final Year Project  
-**Student:** Sagar Maru   
-**Development Date:** March 2026  
 
 ---
 
@@ -1029,6 +1024,5 @@ Sagar Maru
 Linkedin : https://www.linkedin.com/in/sagar-maru-b987b9294/
 
 
- License
 
 This project was developed for educational purposes as part of a  academic submission.
