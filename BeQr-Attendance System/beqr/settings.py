@@ -141,7 +141,7 @@ import dj_database_url
 # ============================================================
 # DATABASE CONFIGURATION
 # ============================================================
-DATABASE_URL = os.environ.get('DATABASE_URL')
+DATABASE_URL = os.environ.get('mysql://avnadmin:AVNS_pwJCKdaqzmgV4iYyscc@mysql-sgr-2434f944-sagarmaru-7cf6.j.aivencloud.com:19216/defaultdb?ssl-mode=REQUIRED')
 
 if DATABASE_URL:
     # Production: Connect to Aiven MySQL via DATABASE_URL environment variable
