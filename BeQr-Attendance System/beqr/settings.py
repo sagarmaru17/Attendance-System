@@ -30,6 +30,8 @@ https://docs.djangoproject.com/en/5.2/ref/settings/
 
 from pathlib import Path
 
+import dj_database_url
+import os
 # ============================================================
 # 1. BASE DIRECTORY CONFIGURATION
 # ============================================================
@@ -87,13 +89,14 @@ INSTALLED_APPS = [
 
 # Middleware: processes requests/responses in order (top to bottom for request, reverse for response)
 MIDDLEWARE = [
-    'django.middleware.security.SecurityMiddleware',        # Security enhancements (HTTPS redirect, etc.)
-    'django.contrib.sessions.middleware.SessionMiddleware', # Session support
-    'django.middleware.common.CommonMiddleware',            # Common utilities (APPEND_SLASH, etc.)
-    'django.middleware.csrf.CsrfViewMiddleware',            # Cross-Site Request Forgery protection
-    'django.contrib.auth.middleware.AuthenticationMiddleware', # User authentication support
-    'django.contrib.messages.middleware.MessageMiddleware',    # Messaging framework support
-    'django.middleware.clickjacking.XFrameOptionsMiddleware',  # Clickjacking protection
+    'django.middleware.security.SecurityMiddleware',
+    'whitenoise.middleware.WhiteNoiseMiddleware',  # Enables static file serving on Render
+    'django.contrib.sessions.middleware.SessionMiddleware',
+    'django.middleware.common.CommonMiddleware',
+    'django.middleware.csrf.CsrfViewMiddleware',
+    'django.contrib.auth.middleware.AuthenticationMiddleware',
+    'django.contrib.messages.middleware.MessageMiddleware',
+    'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
 
 # Root URL configuration (where Django looks for URL patterns)
@@ -132,36 +135,36 @@ TEMPLATES = [
 WSGI_APPLICATION = 'beqr.wsgi.application'
 
 
-# ============================================================
-# 5. DATABASE CONFIGURATION
-# ============================================================
-# https://docs.djangoproject.com/en/5.2/ref/settings/#databases
-
 import os
+import dj_database_url
 
-# MySQL database credentials (replace with environment variables in production)
-DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.mysql',  # Use MySQL database
-        
-        'NAME': 'beqr_db',      # Database name (must exist in MySQL)
-                               # Create with: CREATE DATABASE beqr_db;
-                               
-        'USER': 'bqr',         # MySQL username
-                              # Create with: CREATE USER 'bqr'@'127.0.0.1' IDENTIFIED BY '123';
-                              
-        'PASSWORD': '123',     # MySQL password
-                              # Set during user creation
-                              
-        'HOST': '127.0.0.1',   # Database server address (localhost)
-        
-        'PORT': '3306',        # MySQL default port
+# ============================================================
+# DATABASE CONFIGURATION
+# ============================================================
+DATABASE_URL = os.environ.get('DATABASE_URL')
+
+if DATABASE_URL:
+    # Production: Connect to Aiven MySQL via DATABASE_URL environment variable
+    DATABASES = {
+        'default': dj_database_url.parse(DATABASE_URL)
+    }
+else:
+    # Development: Fallback to local MySQL on your Mac
+    DATABASES = {
+        'default': {
+            'ENGINE': 'django.db.backends.mysql',
+            'NAME': 'attendance_db',
+            'USER': 'root',
+            'PASSWORD': '',
+            'HOST': '127.0.0.1',
+            'PORT': '3306',
+        }
+    }
         
         # GRANT PERMISSIONS:
         # GRANT ALL PRIVILEGES ON beqr_db.* TO 'bqr'@'127.0.0.1';
         # FLUSH PRIVILEGES;
-    }
-}
+
 
 # Password validation
 # https://docs.djangoproject.com/en/5.2/ref/settings/#auth-password-validators
@@ -220,7 +223,8 @@ USE_TZ = True
 
 # URL path to static files in development
 # Access static file like: /static/css/style.css
-STATIC_URL = 'static/'
+STATIC_URL = '/static/'
+STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
 
 # Directory (-ies) containing static files to serve
 # When accessing http://localhost:8000/static/css/style.css
