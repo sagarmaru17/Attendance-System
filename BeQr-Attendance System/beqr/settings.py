@@ -50,7 +50,7 @@ SECRET_KEY = 'django-insecure-x!y8%r^fz55&2%alfyi_%y@gzivgdvebi@n^qzter8-v@m++6@
 # SECURITY WARNING: don't run with debug turned on in production!
 # DEBUG = True: Shows detailed error pages with sensitive information
 # DEBUG = False: Shows generic error pages (required for production)
-DEBUG = True
+DEBUG = False
 
 # List of hosts/domains where the app can run
 # '*' allows all hosts (development only!)
