@@ -141,7 +141,7 @@ import dj_database_url
 # ============================================================
 # DATABASE CONFIGURATION
 # ============================================================
-DATABASE_URL = os.environ.get('mysql://avnadmin:AVNS_pwJCKdaqzmgV4iYyscc@mysql-sgr-2434f944-sagarmaru-7cf6.j.aivencloud.com:19216/defaultdb?ssl-mode=REQUIRED')
+DATABASE_URL = os.environ.get('DATABASE_URL')
 
 if DATABASE_URL:
     # Production: Connect to Aiven MySQL via DATABASE_URL environment variable
@@ -149,15 +149,11 @@ if DATABASE_URL:
         'default': dj_database_url.parse(DATABASE_URL)
     }
 else:
-    # Development: Fallback to local MySQL on your Mac
+    # Development/Build: Use SQLite as fallback (no external DB needed)
     DATABASES = {
         'default': {
-            'ENGINE': 'django.db.backends.mysql',
-            'NAME': 'attendance_db',
-            'USER': 'root',
-            'PASSWORD': '',
-            'HOST': '127.0.0.1',
-            'PORT': '3306',
+            'ENGINE': 'django.db.backends.sqlite3',
+            'NAME': BASE_DIR / 'db.sqlite3',
         }
     }
         
