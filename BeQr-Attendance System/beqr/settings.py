@@ -141,12 +141,24 @@ import dj_database_url
 # ============================================================
 # DATABASE CONFIGURATION
 # ============================================================
-DATABASE_URL = os.environ.get('DATABASE_URL')
+DATABASE_URL = os.environ.get('mysql://avnadmin:AVNS_pwJCKdaqzmgV4iYyscc@mysql-sgr-2434f944-sagarmaru-7cf6.j.aivencloud.com:19216/defaultdb?ssl-mode=REQUIRED')
 
 if DATABASE_URL:
     # Production: Connect to Aiven MySQL via DATABASE_URL environment variable
+    # Remove ssl-mode parameter if present (not recognized by mysqlclient)
+    db_url = DATABASE_URL.replace('?ssl-mode=REQUIRED', '')
+    
+    db_config = dj_database_url.parse(db_url)
+    
+    # Add SSL configuration for mysqlclient
+    db_config['OPTIONS'] = {
+        'ssl': {
+            'ca': '/etc/ssl/certs/ca-certificates.crt',
+        }
+    }
+    
     DATABASES = {
-        'default': dj_database_url.parse(DATABASE_URL)
+        'default': db_config
     }
 else:
     # Development/Build: Use SQLite as fallback (no external DB needed)
