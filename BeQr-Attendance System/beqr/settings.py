@@ -47,7 +47,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent # Absolute path to the project
 # SECURITY WARNING: keep the secret key used in production secret!
 # Used for cryptographic signing (sessions, CSRF tokens, etc.)
 # In production: move to environment variable and use a secure random key
-SECRET_KEY = 'django-insecure-x!y8%r^fz55&2%alfyi_%y@gzivgdvebi@n^qzter8-v@m++6@'
+SECRET_KEY = '14k@@*s5@$1=defyh35z^f8&l_%=ekg9&#7d@3c7msu40%*fn1'
 
 # SECURITY WARNING: don't run with debug turned on in production!
 # DEBUG = True: Shows detailed error pages with sensitive information
