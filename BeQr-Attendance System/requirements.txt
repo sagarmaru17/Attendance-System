@@ -45,6 +45,7 @@ pycparser==3.0
 pydantic==2.12.2
 pydantic_core==2.41.4
 pydyf==0.12.1
+PyJWT==2.13.0
 PyMySQL==1.2.0
 pyparsing==3.2.5
 pyphen==0.17.2
